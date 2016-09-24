@@ -73,7 +73,7 @@
 #### Creating Proxy
 * The proxy creation is also WCF style, you create proxy using ChannelFactory&lt;T&gt;.CreateProxy. where T is your contract type
 * ChannelFactory&lt;T&gt;.CreateProxy won't open the connection unless you pass 'true' to the last parameter
-* The generated proxy implements your contract, and also implements **IClientChannel** interface to allow you to (Open, Close, Dispose) the proxy
+* The generated proxy implements your contract, as well as **IClientChannel** interface to allow you to (Open, Close, Dispose) the proxy
 
         public static void Main(string[] args)
         {
