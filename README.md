@@ -4,7 +4,7 @@
 * WCF style (No WCF code is used)
 * No SOAP
 * Enforces Asynchronous IO
-* Fast and Lightweight
+* Scalable, Fast, and Lightweight
 
 ##### Defining Contract
 * Start by defining contract using **ServiceContract** attribute on an Interface, unlike WCF you can't target classes
