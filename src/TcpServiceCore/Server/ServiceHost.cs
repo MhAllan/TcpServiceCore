@@ -17,7 +17,7 @@ namespace TcpServiceCore.Server
         Type type;
         TcpListener listener;
 
-        public event Action<T> ServiceInstanciated;
+        public event Action<T> ServiceInstantiated;
 
         IInstanceContextFactory<T> InstanceContextFactory = new InstanceContextFactory<T>();
 
@@ -40,7 +40,7 @@ namespace TcpServiceCore.Server
 
         protected override Task OnOpen()
         {
-            this.InstanceContextFactory.ServiceInstanciated += this.ServiceInstanciated;
+            this.InstanceContextFactory.ServiceInstantiated += this.ServiceInstantiated;
             this.listener.Start(3000);
             Task.Run(async () =>
             {

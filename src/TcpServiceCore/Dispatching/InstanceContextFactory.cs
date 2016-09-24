@@ -10,7 +10,7 @@ namespace TcpServiceCore.Dispatching
 {
     class InstanceContextFactory<T> : IInstanceContextFactory<T> where T: new()
     {
-        public event Action<T> ServiceInstanciated;
+        public event Action<T> ServiceInstantiated;
         //Create instace context, no static so we can have two hosts in one application
         ConcurrentDictionary<TcpClient, InstanceContext<T>> contexts =
             new ConcurrentDictionary<TcpClient, InstanceContext<T>>();
@@ -45,7 +45,7 @@ namespace TcpServiceCore.Dispatching
             }
             if (InstanceContext<T>.Current != result)
             {
-                this.ServiceInstanciated?.Invoke(result.Service);
+                this.ServiceInstantiated?.Invoke(result.Service);
             }
             InstanceContext<T>.Current = result;
             return result;

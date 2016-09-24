@@ -28,7 +28,7 @@ namespace TcpServiceCore.Test
 
             host.AddContract<IService>(config);
 
-            host.ServiceInstanciated += s =>
+            host.ServiceInstantiated += s =>
             {
                 //construct the created instance
             };
