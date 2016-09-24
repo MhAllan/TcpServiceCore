@@ -1,5 +1,4 @@
-﻿using TcpServiceCore.Attributes;
-using TcpServiceCore.Communication;
+﻿using TcpServiceCore.Communication;
 using TcpServiceCore.Dispatching;
 using System;
 using System.Collections.Concurrent;

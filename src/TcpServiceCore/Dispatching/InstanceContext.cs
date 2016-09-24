@@ -1,5 +1,4 @@
-﻿using TcpServiceCore.Communication;
-using TcpServiceCore.Protocol;
+﻿using TcpServiceCore.Protocol;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

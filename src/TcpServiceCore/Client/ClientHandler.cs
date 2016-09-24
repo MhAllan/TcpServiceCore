@@ -4,9 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using TcpServiceCore.Communication;
 using TcpServiceCore.Protocol;
-using TcpServiceCore.Tools;
 
 namespace TcpServiceCore.Client
 {
