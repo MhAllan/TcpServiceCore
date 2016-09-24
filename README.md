@@ -8,12 +8,12 @@
 
 ##### Defining Contract
 * Start by defining contract using **ServiceContract** attribute on an Interface, unlike WCF you can't target classes
+* Contracts can be inherit if all interfaces has **ServiceContract** attribute
 * Define operations using **OperationContract** attribute
-* Contracts **must** return Task or Task&lt;T&gt;
+* Operations **must** return Task or Task&lt;T&gt;
 * One way operation(Where the client doesn't block while the service operation is executing) **must return Task**
 * One way operation returns when the proxy writes to the network stream, no delivery is guaranteed.
-* Contracts can be inherit if all interfaces has **ServiceContract** attribute
-* Contract ***out parameters*** are ignored so don't define out parameters
+* Operations' ***out parameters*** are ignored so don't define out parameters
 
           using System;
           using System.Collections.Generic;
