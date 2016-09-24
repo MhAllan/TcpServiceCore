@@ -111,7 +111,7 @@
         }
 
 #### Example Use Cases
-* Http is heavy, slow, or not scalable
+* Http is not mandatory and is heavy, slow, or not scalable
 * Communications within datacenters
 * Queuing framework
 * SignalR backplane
