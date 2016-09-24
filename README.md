@@ -67,7 +67,7 @@
 * Create instance of ServiceHost&lt;T&gt; where T is your service type
 * Add contracts: for every contract you want to expose you need to call AddContract&lt;T&gt; on the host, where T is your contract type
 * AddContract&lt;T&gt; takes one parameter of type ChannelConfig, so you can configure contracts differently
-* Initializing Service: As long as service constructor is parameterless, you need a way to initialize services before invoking their operations, to initialize a service you can listen to **ServiceInstanciated** event fired by **ServiceHost&lt;T&gt;**
+* Initializing Service: Sometimes you may need to initialize services before invoking their operations, you can't do that by any constructor because the dispatcher uses the parameterless constructor. So to initialize a service you can listen to **ServiceInstanciated** event fired by **ServiceHost&lt;T&gt;**
 * Open the host
 
 #### Creating Proxy
@@ -94,7 +94,7 @@
 
             host.ServiceInstanciated += s =>
             {
-                //construct created instances
+                //init created instances
             };
 
             await host.Open();
