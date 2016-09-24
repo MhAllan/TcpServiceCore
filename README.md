@@ -35,6 +35,7 @@
 #### Create the service
 
 * Implement your contract and attribute with **ServiceBehavoir** attribute, like WCF you can set the InstanceContextMode
+* Services must define parameterless constructor
 * When the InstanceContextMode is Single one service instance will be created per host
 * When the InstanceContextMode is PerCall, a new isntance is created for every method call
 * When the InstanceContextMode is PerSession, a new instance is created per Proxy
@@ -58,20 +59,21 @@
 #### Serialization
 * For contract parameters and return to be marshalled they need to be compatible with the used serializer, the framework has two built-in serializers **ProtoSerializer** which is the default, and **JsonSerializer**.
 * **ProtoSerializer** uses **Protobuf-net** nuget library, so if you use this serializer (the default) your type need to be attributed with **ProtoContract** and its properties need to be attributed with **ProtoMember** attribute
-* You can implement your own serializer by implementing **ISerializer** interface then setting Global.Serializer global static property
+* You can implement your own serializer by implementing **ISerializer** interface then setting Global.Serializer static property
 
            Global.Serializer = new TcpServiceCore.Serialization.Json.JsonSerializer();
 
-#### Start the host
+#### Starting the host
 * Create instance of ServiceHost&lt;T&gt; where T is your service type
 * Add contracts: for every contract you want to expose you need to call AddContract&lt;T&gt; on the host, where T is your contract type
-* Initializing Service: As long as services are parameterless you may want to initialize them before invoking their operations, to initialize a service you can ServiceInstanciated event fired by ServiceHost&lt;T&gt;
+* AddContract&lt;T&gt; takes one parameter of type ChannelConfig, so you can configure contracts differently
+* Initializing Service: As long as services are parameterless you may want to initialize them before invoking their operations, to initialize a service you can listen to **ServiceInstanciated** event fired by **ServiceHost&lt;T&gt;**
 * Open the host
 
 #### Creating Proxy
 * The proxy creation is also WCF style, you create proxy using ChannelFactory&lt;T&gt;.CreateProxy. where T is your contract type
-* ChannelFactory&lt;T&gt;.CreateProxy won't open the connection unless you pass 'true' as the last parameter
-* The generated proxy implements your contract and **IClientChannel** interface to allow you to (Open, Close, Dispose) the proxy
+* ChannelFactory&lt;T&gt;.CreateProxy won't open the connection unless you pass 'true' to the last parameter
+* The generated proxy implements your contract, and also implements **IClientChannel** interface to allow you to (Open, Close, Dispose) the proxy
 
         public static void Main(string[] args)
         {
