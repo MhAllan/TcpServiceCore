@@ -10,9 +10,9 @@ namespace TcpServiceCore.Test.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
     public class Service : IService
     {
-        public Task<int> Echo(string msg)
+        public Task<string> Echo(string msg)
         {
-            return Task.FromResult(msg.ToUpper().Length);
+            return Task.FromResult(msg.ToUpper());
         }
 
         public Task FireMsg(string msg)

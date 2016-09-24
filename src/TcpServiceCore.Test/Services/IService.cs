@@ -11,7 +11,7 @@ namespace TcpServiceCore.Test.Services
     {
 
         [OperationContract]
-        Task<int> Echo(string msg);
+        Task<string> Echo(string msg);
 
         [OperationContract(IsOneWay = true)]
         Task FireMsg(string msg);
