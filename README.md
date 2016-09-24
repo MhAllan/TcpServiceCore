@@ -11,7 +11,7 @@
 * Contracts can be inherit if all interfaces has **ServiceContract** attribute
 * Define operations using **OperationContract** attribute
 * Operations **must** return Task or Task&lt;T&gt;
-* One way operation(Where the client doesn't block while the service operation is executing) **must return Task**
+* One way operation (Where the client doesn't block while the service operation is executing) **must return Task**
 * One way operation returns when the proxy writes to the network stream, no delivery is guaranteed.
 * Operations' ***out parameters*** are ignored so don't define out parameters
 
@@ -51,7 +51,7 @@
           public Task FireMsg(string msg)
           {
               Console.WriteLine($"received {msg}");
-              return Task.FromResult(0);
+              return Task.CompletedTask;
           }
         }
 
