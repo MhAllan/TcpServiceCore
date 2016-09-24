@@ -114,7 +114,7 @@
 * Http is heavy, slow, or not scalable
 * Communications within datacenters
 * Queuing framework
-* Signalr backplane
+* SignalR backplane
 * Metrics logging
 
 #### Limitation
