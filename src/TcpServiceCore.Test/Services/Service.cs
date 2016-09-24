@@ -18,7 +18,7 @@ namespace TcpServiceCore.Test.Services
         public Task FireMsg(string msg)
         {
             Console.WriteLine($"received {msg}");
-            return Task.FromResult(0);
+            return Task.CompletedTask;
         }
     }
 }
