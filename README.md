@@ -109,5 +109,14 @@
             
             Console.ReadLine();
         }
+
+#### Example Use Cases
+* Http is heavy, slow, or not scalable
+* Communications within datacenters
+* Queuing framework
+* Signalr backplane
+* Metrics logging
+
 #### Limitation
-This framework is a core for more complex framework for distributed systems, the protocol is not yet done, so there are some limitations, for now, the operations can take only one parameter, if you want to pass multiple parameters you need to wrap them in a containing type. 
+This framework is a core for more complex framework(s) for distributed systems, the protocol is not yet done, so there are some limitations, for now, the operations can take only one parameter, if you want to pass multiple parameters you need to wrap them in a containing type. 
+
