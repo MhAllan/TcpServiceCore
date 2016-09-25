@@ -1,6 +1,6 @@
 ### TcpServiceCore
 #### Introduction
-* Service Framework for .Net Standard over TCP
+* Framework for building Service Oriented Applications over TCP protocol in .Net Standard environment
 * WCF style (No WCF code is used)
 * No SOAP, Serialization of your choice
 * Enforces Asynchronous IO
