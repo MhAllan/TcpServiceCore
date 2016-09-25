@@ -1,4 +1,4 @@
-### TcpServiceCore
+### TcpServiceCore Framework
 #### Introduction
 * Framework for building Service Oriented Applications over TCP protocol in .Net Standard environment
 * WCF style (No WCF code is used)
