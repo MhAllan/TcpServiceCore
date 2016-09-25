@@ -2,14 +2,15 @@
 #### Introduction
 * Service Framework for .Net Standard over TCP
 * WCF style (No WCF code is used)
-* No SOAP
+* No SOAP, Serialization of your choice
 * Enforces Asynchronous IO
 * Scalable, Fast, and Lightweight
 
-##### Defining Contract
+#### Defining the Contract
+* The contract is the shared interface between the service and its clients, the set of methods that the client can call
 * Start by defining contract using **ServiceContract** attribute on an Interface, unlike WCF you can't target classes
 * Contracts can be inherit if all interfaces has **ServiceContract** attribute
-* Define operations using **OperationContract** attribute
+* Define operations using **OperationContract** attribute, the operation is the method you want to expose to clients
 * Operations **must** return **Task** or **Task&lt;T&gt;**
 * One way operation (Where the client doesn't block while the service operation is executing) **must return Task**
 * One way operation returns when the proxy writes to the network stream, delivery is not guaranteed in one way operations.
@@ -32,7 +33,7 @@
               Task FireMsg(string msg);
           }
 
-#### Create the service
+#### Creating the service
 
 * Implement the contract and attribute the implementing class with **ServiceBehavoir** attribute, like WCF you can set the InstanceContextMode
 * Services must define parameterless constructor
@@ -57,7 +58,7 @@
         }
 
 #### Serialization
-* For contract parameters and return to be marshalled they need to be compatible with the used serializer, the framework has two built-in serializers **ProtoSerializer** which is the default, and **JsonSerializer**.
+* For contract parameters and return result to be marshalled, they need to be compatible with the used serializer, the framework has two built-in serializers, **ProtoSerializer** which is the default, and **JsonSerializer**.
 * **ProtoSerializer** uses **Protobuf-net** nuget library, so if you use this serializer (the default) your type need to be attributed with **ProtoContract** and its properties need to be attributed with **ProtoMember** attribute
 * You can implement your own serializer by implementing **ISerializer** interface then setting **Global.Serializer** static property
 
@@ -71,8 +72,8 @@
 * Open the host
 
 #### Creating Proxy
-* The proxy creation is also WCF style, you create proxy using ChannelFactory&lt;T&gt;.CreateProxy. where T is your contract type
-* ChannelFactory&lt;T&gt;.CreateProxy won't open the connection unless you pass 'true' to the last parameter
+* The proxy creation is also WCF style, you create proxy using **ChannelFactory&lt;T&gt;.CreateProxy**. where T is your contract type
+* **ChannelFactory&lt;T&gt;.CreateProxy** won't open the connection unless you pass 'true' to the last parameter
 * The generated proxy implements your contract, as well as **IClientChannel** interface to allow you to (Open, Close, Dispose) the proxy
 
         public static void Main(string[] args)
