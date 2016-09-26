@@ -32,11 +32,13 @@ namespace TcpServiceCore.Protocol
             return response;
         }
 
-        public async Task WriteRequest(Request request, ResponseEvent responseEvent)
+        public async Task<ResponseEvent> WriteRequest(Request request, bool isOneWay)
         {
-            if (responseEvent != null)
+            ResponseEvent result = null;
+            if (!isOneWay)
             {
-                if (!this.mapper.TryAdd(request.Id, responseEvent))
+                result = new ResponseEvent();
+                if (!this.mapper.TryAdd(request.Id, result))
                 {
                     this.Dispose();
                     throw new Exception("Could not add request to the mapper");
@@ -58,6 +60,8 @@ namespace TcpServiceCore.Protocol
             data.AddRange(request.Parameter);
 
             await this.Write(data.ToArray());
+
+            return result;
         }
 
         protected override async Task OnRead()
@@ -65,7 +69,7 @@ namespace TcpServiceCore.Protocol
             var response = await this.GetResponse();
             ResponseEvent responseEvent;
             this.mapper.TryRemove(response.Id, out responseEvent);
-            responseEvent.Notify(response);
+            responseEvent.SetResponse(response);
             await Task.CompletedTask;
         }
     }

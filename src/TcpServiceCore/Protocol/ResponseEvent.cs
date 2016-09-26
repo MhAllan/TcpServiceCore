@@ -8,29 +8,32 @@ namespace TcpServiceCore.Protocol
 {
     class ResponseEvent
     {
-        public Response Response { get; set; }
+        Response _response;
         public bool IsSuccess { get; set; }
         public bool IsCompleted { get; private set; }
 
         ManualResetEvent Evt;
+
         public ResponseEvent()
         {
-            this.Response = null;
-            this.IsSuccess = false;
             this.Evt = new ManualResetEvent(false);
         }
 
-        public void Wait(int timeout)
+        public void SetResponse(Response response)
+        {
+            this.IsSuccess = true;
+            this._response = response;
+            this.Evt.Set();
+        }
+
+        public Response GetResponse(int timeout)
         {
             this.Evt.WaitOne(timeout);
             this.IsCompleted = true;
-        }
 
-        public void Notify(Response response)
-        {
-            this.IsSuccess = true;
-            this.Response = response;
-            this.Evt.Set();
+            if (this.IsSuccess == false)
+                throw new Exception("Receivetimeout reached without getting response");
+            return _response;
         }
     }
 }

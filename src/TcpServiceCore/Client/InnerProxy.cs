@@ -50,7 +50,7 @@ namespace TcpServiceCore.Client
 
         public async Task SendOneWay(Request request)
         {
-            await this.responseHandler.WriteRequest(request, null);
+            await this.responseHandler.WriteRequest(request, true);
         }
 
         public async Task SendVoid(Request request)
@@ -67,12 +67,8 @@ namespace TcpServiceCore.Client
 
         async Task<Response> SendWaitResponse(Request request)
         {
-            var responseEvent = new ResponseEvent();
-            await this.responseHandler.WriteRequest(request, responseEvent);
-            responseEvent.Wait(this.client.Client.ReceiveTimeout);
-            if(responseEvent.IsSuccess == false)
-                throw new Exception("Receivetimeout reached without getting response");
-            return responseEvent.Response;
+            var responseEvent = await this.responseHandler.WriteRequest(request, false);
+            return responseEvent.GetResponse(this.client.Client.ReceiveTimeout);
         }
     }
 }
