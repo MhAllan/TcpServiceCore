@@ -17,7 +17,7 @@ namespace TcpServiceCore.Client
         string server;
         int port;
         TcpClient client;
-        ClientHandler responseHandler;
+        ResponseStreamHandler responseHandler;
         ChannelConfig ChannelConfig;
 
         public InnerProxy(string server, int port, ChannelConfig channelConfig)
@@ -33,8 +33,7 @@ namespace TcpServiceCore.Client
         {
             this.client = new TcpClient(AddressFamily.InterNetwork);
             this.client.Configure(ChannelConfig);
-            var clientHandler = new ClientHandler(this.client);
-            this.responseHandler = clientHandler;
+            this.responseHandler = new ResponseStreamHandler(this.client);
         }
 
         protected override async Task OnOpen()
@@ -51,7 +50,7 @@ namespace TcpServiceCore.Client
 
         public async Task SendOneWay(Request request)
         {
-            await this.responseHandler.WriteRequest(request);
+            await this.responseHandler.WriteRequest(request, null);
         }
 
         public async Task SendVoid(Request request)
@@ -62,27 +61,18 @@ namespace TcpServiceCore.Client
         public async Task<R> SendReturn<R>(Request request)
         {
             Response response = await this.SendWaitResponse(request);
-            if (response == null)
-                throw new Exception("Receivetimeout reached without getting response");
             var result = Global.Serializer.Deserialize<R>(response.Value);
             return result;
         }
 
         async Task<Response> SendWaitResponse(Request request)
         {
-            Response response = null;
-            var evt = new ManualResetEvent(false);
-            this.responseHandler.RegisterRequest(request, (resp) =>
-            {
-                response = resp;
-                evt.Set();
-            });
-
-            await this.responseHandler.WriteRequest(request);
-
-            evt.WaitOne();
-
-            return response;
+            var responseEvent = new ResponseEvent();
+            await this.responseHandler.WriteRequest(request, responseEvent);
+            responseEvent.Wait(this.client.Client.ReceiveTimeout);
+            if(responseEvent.IsSuccess == false)
+                throw new Exception("Receivetimeout reached without getting response");
+            return responseEvent.Response;
         }
     }
 }

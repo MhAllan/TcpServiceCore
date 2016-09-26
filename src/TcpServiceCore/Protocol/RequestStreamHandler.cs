@@ -22,7 +22,6 @@ namespace TcpServiceCore.Protocol
             var index = 0;
             var data = await this.Read();
 
-            //var request = Global.Serializer.Deserialize<Request>(data);
             var id = BitConverter.ToInt32(data, index);
 
             index += 4;
@@ -56,7 +55,7 @@ namespace TcpServiceCore.Protocol
             data.AddRange(BitConverter.GetBytes(response.Id));
             data.AddRange(BitConverter.GetBytes(response.IsError));
             data.AddRange(response.Value);
-            //var data = Global.Serializer.Serialize(response);
+
             await this.Write(data.ToArray());
         }
 

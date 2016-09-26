@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -7,12 +8,13 @@ using System.Threading.Tasks;
 
 namespace TcpServiceCore.Protocol
 {
-    abstract class ResponseStreamHandler : StreamHandler, IResponseHandler
+    class ResponseStreamHandler : StreamHandler, IResponseHandler
     {
+        ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
+
         public ResponseStreamHandler(TcpClient client)
                 : base(client)
         {
-
         }
 
         public async Task<Response> GetResponse()
@@ -30,8 +32,17 @@ namespace TcpServiceCore.Protocol
             return response;
         }
 
-        public async Task WriteRequest(Request request)
+        public async Task WriteRequest(Request request, ResponseEvent responseEvent)
         {
+            if (responseEvent != null)
+            {
+                if (!this.mapper.TryAdd(request.Id, responseEvent))
+                {
+                    this.Dispose();
+                    throw new Exception("Could not add request to the mapper");
+                }
+            }
+
             var data = new List<byte>();
 
             data.AddRange(BitConverter.GetBytes(request.Id));
@@ -49,12 +60,13 @@ namespace TcpServiceCore.Protocol
             await this.Write(data.ToArray());
         }
 
-        protected abstract Task OnResponseReceived(Response response);
-
         protected override async Task OnRead()
         {
             var response = await this.GetResponse();
-            await this.OnResponseReceived(response);
+            ResponseEvent responseEvent;
+            this.mapper.TryRemove(response.Id, out responseEvent);
+            responseEvent.Notify(response);
+            await Task.CompletedTask;
         }
     }
 }

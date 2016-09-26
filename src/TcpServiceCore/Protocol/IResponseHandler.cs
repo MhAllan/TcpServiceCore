@@ -10,6 +10,6 @@ namespace TcpServiceCore.Protocol
     interface IResponseHandler : ICommunicationObject
     {
         Task<Response> GetResponse();
-        Task WriteRequest(Request request);
+        Task WriteRequest(Request request, ResponseEvent responseEvent);
     }
 }
