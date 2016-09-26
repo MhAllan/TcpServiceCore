@@ -114,6 +114,7 @@
 #### Example Use Cases
 * Http is not mandatory and is heavy, slow, or not scalable
 * Communications within datacenters
+* Xamarin games
 * Queuing framework
 * SignalR backplane
 * Metrics logging
