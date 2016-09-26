@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Protocol
@@ -17,7 +18,7 @@ namespace TcpServiceCore.Protocol
         {
         }
 
-        public async Task<Response> GetResponse()
+        async Task<Response> GetResponse()
         {
             var data = await this.Read();
 
@@ -32,19 +33,8 @@ namespace TcpServiceCore.Protocol
             return response;
         }
 
-        public async Task<ResponseEvent> WriteRequest(Request request, bool isOneWay)
+        public async Task WriteRequest(Request request)
         {
-            ResponseEvent result = null;
-            if (!isOneWay)
-            {
-                result = new ResponseEvent();
-                if (!this.mapper.TryAdd(request.Id, result))
-                {
-                    this.Dispose();
-                    throw new Exception("Could not add request to the mapper");
-                }
-            }
-
             var data = new List<byte>();
 
             data.AddRange(BitConverter.GetBytes(request.Id));
@@ -60,8 +50,18 @@ namespace TcpServiceCore.Protocol
             data.AddRange(request.Parameter);
 
             await this.Write(data.ToArray());
+        }
 
-            return result;
+        public async Task<Response> WriteRequest(Request request, int timeout)
+        {
+            var responseEvent = new ResponseEvent();
+            if (!this.mapper.TryAdd(request.Id, responseEvent))
+            {
+                this.Dispose();
+                throw new Exception("Could not add request to the mapper");
+            }
+            await this.WriteRequest(request);
+            return responseEvent.GetResponse(timeout);
         }
 
         protected override async Task OnRead()
@@ -71,6 +71,37 @@ namespace TcpServiceCore.Protocol
             this.mapper.TryRemove(response.Id, out responseEvent);
             responseEvent.SetResponse(response);
             await Task.CompletedTask;
+        }
+
+        private class ResponseEvent
+        {
+            Response _response;
+            public bool IsSuccess { get; set; }
+            public bool IsCompleted { get; private set; }
+
+            ManualResetEvent Evt;
+
+            public ResponseEvent()
+            {
+                this.Evt = new ManualResetEvent(false);
+            }
+
+            public void SetResponse(Response response)
+            {
+                this.IsSuccess = true;
+                this._response = response;
+                this.Evt.Set();
+            }
+
+            public Response GetResponse(int timeout)
+            {
+                this.Evt.WaitOne(timeout);
+                this.IsCompleted = true;
+
+                if (this.IsSuccess == false)
+                    throw new Exception("Receivetimeout reached without getting response");
+                return _response;
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ namespace TcpServiceCore.Protocol
 {
     interface IResponseHandler : ICommunicationObject
     {
-        Task<Response> GetResponse();
-        Task<ResponseEvent> WriteRequest(Request request, bool isOneWay);
+        Task WriteRequest(Request request);
+        Task<Response> WriteRequest(Request request, int timeout);
     }
 }

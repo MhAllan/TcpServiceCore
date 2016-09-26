@@ -50,25 +50,19 @@ namespace TcpServiceCore.Client
 
         public async Task SendOneWay(Request request)
         {
-            await this.responseHandler.WriteRequest(request, true);
+            await this.responseHandler.WriteRequest(request);
         }
 
         public async Task SendVoid(Request request)
         {
-            await SendWaitResponse(request);
+            await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
         }
 
         public async Task<R> SendReturn<R>(Request request)
         {
-            Response response = await this.SendWaitResponse(request);
+            Response response = await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
             var result = Global.Serializer.Deserialize<R>(response.Value);
             return result;
-        }
-
-        async Task<Response> SendWaitResponse(Request request)
-        {
-            var responseEvent = await this.responseHandler.WriteRequest(request, false);
-            return responseEvent.GetResponse(this.client.Client.ReceiveTimeout);
         }
     }
 }
