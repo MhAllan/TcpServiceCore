@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using TcpServiceCore.Client;
 using TcpServiceCore.Communication;
@@ -35,7 +33,7 @@ namespace TcpServiceCore.Test
 
             await host.Open();
 
-            var client = await ChannelFactory<IService>.CreateProxy("localhost", 9091, config, true);
+            var client = await ChannelFactory<IService>.CreateProxy("localhost", 9091, config);
 
             using ((IClientChannel)client)
             {

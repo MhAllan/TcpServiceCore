@@ -11,7 +11,7 @@ namespace TcpServiceCore.Protocol
 {
     class ResponseStreamHandler : StreamHandler, IResponseHandler
     {
-        ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
+        readonly ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
 
         public ResponseStreamHandler(TcpClient client)
                 : base(client)
@@ -20,7 +20,7 @@ namespace TcpServiceCore.Protocol
 
         async Task<Response> GetResponse()
         {
-            var data = await this.Read();
+            var data = await Read();
 
             var id = BitConverter.ToInt32(data, 0);
 
@@ -49,26 +49,26 @@ namespace TcpServiceCore.Protocol
 
             data.AddRange(request.Parameter);
 
-            await this.Write(data.ToArray());
+            await Write(data.ToArray());
         }
 
         public async Task<Response> WriteRequest(Request request, int timeout)
         {
             var responseEvent = new ResponseEvent();
-            if (!this.mapper.TryAdd(request.Id, responseEvent))
+            if (!mapper.TryAdd(request.Id, responseEvent))
             {
-                this.Dispose();
+                Dispose();
                 throw new Exception("Could not add request to the mapper");
             }
-            await this.WriteRequest(request);
+            await WriteRequest(request);
             return responseEvent.GetResponse(timeout);
         }
 
         protected override async Task OnRead()
         {
-            var response = await this.GetResponse();
+            var response = await GetResponse();
             ResponseEvent responseEvent;
-            this.mapper.TryRemove(response.Id, out responseEvent);
+            mapper.TryRemove(response.Id, out responseEvent);
             responseEvent.SetResponse(response);
             await Task.CompletedTask;
         }
@@ -76,29 +76,29 @@ namespace TcpServiceCore.Protocol
         private class ResponseEvent
         {
             Response _response;
-            public bool IsSuccess { get; set; }
-            public bool IsCompleted { get; private set; }
+            private bool IsSuccess { get; set; }
+            private bool IsCompleted { get; set; }
 
-            ManualResetEvent Evt;
+            readonly ManualResetEvent Evt;
 
             public ResponseEvent()
             {
-                this.Evt = new ManualResetEvent(false);
+                Evt = new ManualResetEvent(false);
             }
 
             public void SetResponse(Response response)
             {
-                this.IsSuccess = true;
-                this._response = response;
-                this.Evt.Set();
+                IsSuccess = true;
+                _response = response;
+                Evt.Set();
             }
 
             public Response GetResponse(int timeout)
             {
-                this.Evt.WaitOne(timeout);
-                this.IsCompleted = true;
+                Evt.WaitOne(timeout);
+                IsCompleted = true;
 
-                if (this.IsSuccess == false)
+                if (IsSuccess == false)
                     throw new Exception("Receivetimeout reached without getting response");
                 return _response;
             }

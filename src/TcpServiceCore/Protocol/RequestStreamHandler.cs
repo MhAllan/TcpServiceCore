@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -10,8 +9,7 @@ namespace TcpServiceCore.Protocol
 {
     abstract class RequestStreamHandler : StreamHandler, IRequestHandler
     {
-        public RequestStreamHandler(TcpClient client)
-            : base(client)
+        protected RequestStreamHandler(TcpClient client) : base(client)
         {
 
         }
@@ -20,7 +18,7 @@ namespace TcpServiceCore.Protocol
         public async Task<Request> GetRequest()
         {
             var index = 0;
-            var data = await this.Read();
+            var data = await Read();
 
             var id = BitConverter.ToInt32(data, index);
 
@@ -56,15 +54,15 @@ namespace TcpServiceCore.Protocol
             data.AddRange(BitConverter.GetBytes(response.IsError));
             data.AddRange(response.Value);
 
-            await this.Write(data.ToArray());
+            await Write(data.ToArray());
         }
 
         protected abstract Task OnRequestReceived(Request request);
 
         protected override async Task OnRead()
         {
-            var request = await this.GetRequest();
-            await this.OnRequestReceived(request);
+            var request = await GetRequest();
+            await OnRequestReceived(request);
         }
     }
 }

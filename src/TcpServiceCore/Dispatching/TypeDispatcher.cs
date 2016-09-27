@@ -1,17 +1,14 @@
 ﻿using TcpServiceCore.Attributes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TcpServiceCore.Dispatching
 {
     class TypeDispatcher<T> where T: new()
     {
-        static object _lock = new object();
+        static readonly object _lock = new object();
         static TypeDispatcher<T> instance;
         
         public static TypeDispatcher<T> Instance
@@ -35,17 +32,17 @@ namespace TcpServiceCore.Dispatching
         private TypeDispatcher()
         {
             var type = typeof(T);
-            this.InstanceContextMode = InstanceContextMode.PerCall;
+            InstanceContextMode = InstanceContextMode.PerCall;
 
             var serviceBehavior = type.GetTypeInfo().GetCustomAttribute<ServiceBehaviorAttribute>(false);
             if (serviceBehavior != null)
             {
-                this.InstanceContextMode = serviceBehavior.InstanceContextMode;
+                InstanceContextMode = serviceBehavior.InstanceContextMode;
             }
 
             GetOperations(type);
             
-            if (this.OperationDispatchers.Count == 0)
+            if (OperationDispatchers.Count == 0)
                 throw new Exception("No OperationContract found");
         }
 
@@ -60,7 +57,7 @@ namespace TcpServiceCore.Dispatching
                     var operations = ContractHelper.ValidateContract(intInfo);
                     if (operations != null)
                     {
-                        this.OperationDispatchers.AddRange(operations);
+                        OperationDispatchers.AddRange(operations);
                     }
                     GetOperations(intfc);
                 }
@@ -74,7 +71,7 @@ namespace TcpServiceCore.Dispatching
 
         public MethodOperation GetOperation(string name)
         {
-            return this.OperationDispatchers.FirstOrDefault(x => x.TypeQualifiedName == name);
+            return OperationDispatchers.FirstOrDefault(x => x.TypeQualifiedName == name);
         }
     }
 }

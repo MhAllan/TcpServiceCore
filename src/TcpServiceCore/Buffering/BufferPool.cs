@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TcpServiceCore.Buffering
 {
     public class BufferPool
     {
-        Queue<byte[]> buffers = new Queue<byte[]>();
+        readonly Queue<byte[]> buffers = new Queue<byte[]>();
 
         public readonly int BufferSize;
         public readonly int PoolSize;
@@ -16,8 +13,8 @@ namespace TcpServiceCore.Buffering
 
         public BufferPool(int bufferSize, int poolSize)
         {
-            var bsn = nameof(bufferSize);
-            var psn = nameof(poolSize);
+            const string bsn = nameof(bufferSize);
+            const string psn = nameof(poolSize);
             if (bufferSize <= 0)
                 throw new Exception($"{bsn} must be positive greater than 0");
             if (poolSize <= 0)
@@ -25,24 +22,24 @@ namespace TcpServiceCore.Buffering
             if (poolSize < bufferSize)
                 throw new Exception($"{psn} can not be less than {bsn}");
 
-            this.BufferSize = bufferSize;
-            this.PoolSize = poolSize;
-            this.MaxBuffersCount = (int)Math.Floor((double)this.PoolSize / this.BufferSize);
+            BufferSize = bufferSize;
+            PoolSize = poolSize;
+            MaxBuffersCount = (int)Math.Floor((double)PoolSize / BufferSize);
         }
 
         public byte[] GetBuffer()
         {
-            byte[] buffer = null;
-            lock (this.buffers)
+            byte[] buffer;
+            lock (buffers)
             {
-                if (this.buffers.Count == 0)
+                if (buffers.Count == 0)
                 {
-                    buffer = new byte[this.BufferSize];
-                    this.buffers.Enqueue(buffer);
+                    buffer = new byte[BufferSize];
+                    buffers.Enqueue(buffer);
                 }
                 else
                 {
-                    buffer = this.buffers.Dequeue();
+                    buffer = buffers.Dequeue();
                 }
             }
             return buffer;
@@ -50,16 +47,16 @@ namespace TcpServiceCore.Buffering
 
         public void AddBuffer(byte[] buffer)
         {
-            if (buffer == null || buffer.Length != this.BufferSize)
+            if (buffer == null || buffer.Length != BufferSize)
                 return;
 
-            if (this.buffers.Count < this.MaxBuffersCount)
+            if (buffers.Count < MaxBuffersCount)
             {
-                lock (this.buffers)
+                lock (buffers)
                 {
-                    if (this.buffers.Count < this.MaxBuffersCount)
+                    if (buffers.Count < MaxBuffersCount)
                     {
-                        this.buffers.Enqueue(buffer);
+                        buffers.Enqueue(buffer);
                     }
                 }
             }

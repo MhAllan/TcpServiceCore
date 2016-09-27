@@ -1,9 +1,8 @@
 ﻿using TcpServiceCore.Communication;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Protocol
@@ -15,32 +14,33 @@ namespace TcpServiceCore.Protocol
         protected TcpClient Client;
         protected NetworkStream Stream;
 
-        public StreamHandler(TcpClient client)
+        protected StreamHandler(TcpClient client)
         {
-            this.Client = client;
+            Client = client;
         }
 
         protected abstract Task OnRead();
 
         protected override Task OnOpen()
         {
-            this.Stream = this.Client.GetStream();
+            Stream = Client.GetStream();
             Task.Run(async () =>
             {
                 try
                 {
-                    while (this.Stream.CanRead)
+                    while (Stream.CanRead)
                     {
-                        await this.OnRead();
+                        await OnRead();
                     }
                 }
                 catch (Exception ex)
                 {
+                    Debug.Write(ex.Message);
                     //Global.ExceptionHandler?.LogException(ex);
                 }
                 finally
                 {
-                    this.Dispose();
+                    Dispose();
                 }
             });
             return Task.CompletedTask;
@@ -48,8 +48,8 @@ namespace TcpServiceCore.Protocol
 
         protected async Task<byte[]> Read()
         {
-            var size = await this.GetMessageSize();
-            var msg = await this.ReadBytes(size);
+            var size = await GetMessageSize();
+            var msg = await ReadBytes(size);
             return msg;
         }
 
@@ -61,12 +61,12 @@ namespace TcpServiceCore.Protocol
             msg.AddRange(dataSize);
             msg.AddRange(data);
 
-            await this.Stream.WriteAsync(msg.ToArray(), 0, msg.Count);
+            await Stream.WriteAsync(msg.ToArray(), 0, msg.Count);
         }
 
         async Task<int> GetMessageSize()
         {
-            var bytes = await this.ReadBytes(4);
+            var bytes = await ReadBytes(4);
             return BitConverter.ToInt32(bytes, 0);
         }
 
@@ -74,22 +74,22 @@ namespace TcpServiceCore.Protocol
         {
             var result = new byte[length];
             var read = 0;
-            while (this.State == CommunicationState.Opened && this.Stream.CanRead)
+            while (State == CommunicationState.Opened && Stream.CanRead)
             {
-                read += await this.Stream.ReadAsync(result, read, length - read);
+                read += await Stream.ReadAsync(result, read, length - read);
                 if (read == length)
                 {
                     return result;
                 }
             }
-            await this.Close();
+            await Close();
             throw new Exception("Stream is not readable");
         }
 
         protected override Task OnClose()
         {
-            this.Client.Dispose();
-            this.Disconnected?.Invoke(this.Client);
+            Client.Dispose();
+            Disconnected?.Invoke(Client);
             return Task.CompletedTask;
         }
     }

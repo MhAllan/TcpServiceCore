@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Communication
@@ -11,9 +7,9 @@ namespace TcpServiceCore.Communication
     {
         public CommunicationState State { get; private set; }
 
-        public CommunicationObject()
+        protected CommunicationObject()
         {
-            this.State = CommunicationState.Created;
+            State = CommunicationState.Created;
         }
 
         protected abstract Task OnOpen();
@@ -24,25 +20,25 @@ namespace TcpServiceCore.Communication
         {
             lock (this)
             {
-                if (this.State != CommunicationState.Created)
+                if (State != CommunicationState.Created)
                     throw new Exception($"Can not open channel when its state is {State.ToString()}");
-                this.State = CommunicationState.Openning;
+                State = CommunicationState.Openning;
             }
             try
             {
-                await this.OnOpen();
+                await OnOpen();
                 lock (this)
                 {
-                    if (this.State != CommunicationState.Openning)
+                    if (State != CommunicationState.Openning)
                         throw new Exception($"Can not open channel when its state is {State.ToString()}");
-                    this.State = CommunicationState.Opened;
+                    State = CommunicationState.Opened;
                 }
             }
             catch (Exception)
             {
                 lock (this)
                 {
-                    this.State = CommunicationState.Faulted;
+                    State = CommunicationState.Faulted;
                     throw;
                 }
             }
@@ -52,25 +48,25 @@ namespace TcpServiceCore.Communication
         {
             lock (this)
             {
-                if(this.State < CommunicationState.Opened)
+                if(State < CommunicationState.Opened)
                     throw new Exception($"Can not close channel when its state is {State.ToString()}");
-                this.State = CommunicationState.Closing;
+                State = CommunicationState.Closing;
             }
             try
             {
-                await this.OnClose();
+                await OnClose();
                 lock (this)
                 {
-                    if (this.State != CommunicationState.Closing)
+                    if (State != CommunicationState.Closing)
                         throw new Exception($"Can not close channel when its state is {State.ToString()}");
-                    this.State = CommunicationState.Closed;
+                    State = CommunicationState.Closed;
                 }
             }
             catch (Exception)
             {
                 lock (this)
                 {
-                    this.State = CommunicationState.Faulted;
+                    State = CommunicationState.Faulted;
                     throw;
                 }
             }
@@ -78,12 +74,12 @@ namespace TcpServiceCore.Communication
 
         public virtual async Task Abort()
         {
-            await this.OnClose();
+            await OnClose();
         }
 
         public async void Dispose()
         {
-            await this.Abort();
+            await Abort();
         }
     }
 }
