@@ -1,11 +1,8 @@
 ﻿using TcpServiceCore.Attributes;
 using TcpServiceCore.Protocol;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Dispatching
@@ -26,32 +23,32 @@ namespace TcpServiceCore.Dispatching
 
         public MethodOperation(MethodInfo methodInfo)
         {
-            this.MethodInfo = methodInfo;
-            this.ReturnType = this.MethodInfo.ReturnType;
-            this.Name = methodInfo.Name;
-            this.TypeQualifiedName = $"{methodInfo.DeclaringType.Name}.{methodInfo.Name}";
+            MethodInfo = methodInfo;
+            ReturnType = MethodInfo.ReturnType;
+            Name = methodInfo.Name;
+            TypeQualifiedName = $"{methodInfo.DeclaringType.Name}.{methodInfo.Name}";
 
-            this.IsReturnTypeGeneric = this.ReturnType.GetTypeInfo().IsGenericType;
-            this.IsVoidTask = this.MethodInfo.ReturnType == typeof(Task);
-            this.IsAwaitable = IsVoidTask || 
-                (this.IsReturnTypeGeneric && this.ReturnType.GetGenericTypeDefinition() == typeof(Task<>));
-            this.Parameters = this.MethodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
-            var attr = this.MethodInfo.GetCustomAttribute<OperationContractAttribute>();
+            IsReturnTypeGeneric = ReturnType.GetTypeInfo().IsGenericType;
+            IsVoidTask = MethodInfo.ReturnType == typeof(Task);
+            IsAwaitable = IsVoidTask || 
+                (IsReturnTypeGeneric && ReturnType.GetGenericTypeDefinition() == typeof(Task<>));
+            Parameters = MethodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
+            var attr = MethodInfo.GetCustomAttribute<OperationContractAttribute>();
             if (attr != null)
             {
-                this.IsOperation = true;
-                this.IsOneWay = attr.IsOneWay;
+                IsOperation = true;
+                IsOneWay = attr.IsOneWay;
             }
         }
 
         public void ValidateOperationContract()
         {
-            if (!this.IsOperation)
-                throw new Exception($"{this.Name} is not attributed with {nameof(OperationContractAttribute)}");
-            if (!this.IsAwaitable)
-                throw new Exception($"{this.Name} is Operation Contract, it must return Task or Task<T>");
-            if (this.IsOneWay && !this.IsVoidTask)
-                throw new Exception($"{this.Name} is One Way Operation Contract, it must return Task");
+            if (!IsOperation)
+                throw new Exception($"{Name} is not attributed with {nameof(OperationContractAttribute)}");
+            if (!IsAwaitable)
+                throw new Exception($"{Name} is Operation Contract, it must return Task or Task<T>");
+            if (IsOneWay && !IsVoidTask)
+                throw new Exception($"{Name} is One Way Operation Contract, it must return Task");
         }
 
         public async Task<object> Execute(object instance, Request request)
@@ -60,18 +57,18 @@ namespace TcpServiceCore.Dispatching
             
             //TODO fix this when supporting multiple parameters
             var param = Parameters == null || Parameters.Length == 0 ? null :
-                new object[] {
+                new[] {
                     Global.Serializer.Deserialize(Parameters[0], paramBytes)
                 };
 
             object result = null;
-            if (this.IsVoidTask)
+            if (IsVoidTask)
             {
-                await (dynamic)this.MethodInfo.Invoke(instance, param);
+                await (dynamic)MethodInfo.Invoke(instance, param);
             }
             else
             {
-                result = await (dynamic)this.MethodInfo.Invoke(instance, param);
+                result = await (dynamic)MethodInfo.Invoke(instance, param);
             }
             return result;
         }

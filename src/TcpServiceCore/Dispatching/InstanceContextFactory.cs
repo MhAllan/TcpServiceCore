@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TcpServiceCore.Dispatching
 {
@@ -12,10 +8,10 @@ namespace TcpServiceCore.Dispatching
     {
         public event Action<T> ServiceInstantiated;
         //Create instace context, no static so we can have two hosts in one application
-        ConcurrentDictionary<TcpClient, InstanceContext<T>> contexts =
+        readonly ConcurrentDictionary<TcpClient, InstanceContext<T>> contexts =
             new ConcurrentDictionary<TcpClient, InstanceContext<T>>();
 
-        object _lock = new object();
+        readonly object _lock = new object();
 
         InstanceContext<T> Singleton;
 
@@ -45,7 +41,7 @@ namespace TcpServiceCore.Dispatching
             }
             if (InstanceContext<T>.Current != result)
             {
-                this.ServiceInstantiated?.Invoke(result.Service);
+                ServiceInstantiated?.Invoke(result.Service);
             }
             InstanceContext<T>.Current = result;
             return result;

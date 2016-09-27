@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Reflection;
 using TcpServiceCore.Attributes;
 
@@ -23,7 +22,8 @@ namespace TcpServiceCore.Dispatching
 
             var operations = contractType.GetMethods()
                                 .Where(x => x.GetCustomAttribute<OperationContractAttribute>() != null)
-                                .Select(x => new MethodOperation(x));
+                                .Select(x => new MethodOperation(x))
+                                .ToList(); 
             
             foreach (var op in operations)
             {

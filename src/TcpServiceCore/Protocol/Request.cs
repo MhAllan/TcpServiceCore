@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TcpServiceCore.Protocol
+﻿namespace TcpServiceCore.Protocol
 {
     class Request
     {
@@ -18,13 +12,10 @@ namespace TcpServiceCore.Protocol
 
         public Request(int id, string contract, string operation, object parameter)
         {
-            this.Id = id;
-            this.Contract = contract;
-            this.Operation = operation;
-            if (parameter is byte[])
-                this.Parameter = (byte[])parameter;
-            else
-                this.Parameter = Global.Serializer.Serialize(parameter);
+            Id = id;
+            Contract = contract;
+            Operation = operation;
+            Parameter = parameter as byte[] ?? Global.Serializer.Serialize(parameter);
         }
     }
 }

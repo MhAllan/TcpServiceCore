@@ -1,12 +1,10 @@
-﻿using TcpServiceCore.Attributes;
-using TcpServiceCore.Communication;
+﻿using TcpServiceCore.Communication;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
 using System.Threading.Tasks;
 using TcpServiceCore.Dispatching;
 
@@ -14,7 +12,7 @@ namespace TcpServiceCore.Client
 {
     public static class ChannelFactory<T>
     {
-        static Type ImplementingType;
+        static readonly Type ImplementingType;
         static Type ProxyType;
 
         static ChannelFactory()
@@ -60,7 +58,7 @@ namespace TcpServiceCore.Client
 
             var ctor = builder.DefineConstructor(MethodAttributes.Public,
                 CallingConventions.HasThis,
-                new Type[] { channel.FieldType });
+                new[] { channel.FieldType });
 
             var il = ctor.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
@@ -86,7 +84,7 @@ namespace TcpServiceCore.Client
                     ImplementInterface(_interface, builder, channel);
                 }
 
-                IEnumerable<MethodOperation> operations = null;
+                IEnumerable<MethodOperation> operations;
                 var intInfo = interfaceType.GetTypeInfo();
 
                 if (ContractHelper.IsContract(intInfo))
@@ -111,7 +109,7 @@ namespace TcpServiceCore.Client
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldfld, channel);
 
-                    MethodInfo invoke = null;
+                    MethodInfo invoke;
                     //implement the user interface
                     if (operation.IsOperation)
                     {

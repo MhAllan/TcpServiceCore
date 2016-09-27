@@ -12,9 +12,9 @@ namespace TcpServiceCore.Server
 {
     class ServerRequestHandler<T> : RequestStreamHandler where T: new()
     {
-        IInstanceContextFactory<T> instanceContextFactory;
+        readonly IInstanceContextFactory<T> instanceContextFactory;
 
-        Dictionary<string, ChannelConfig> channelConfigs;
+        readonly Dictionary<string, ChannelConfig> channelConfigs;
         bool isAccepted;
 
         public ServerRequestHandler(TcpClient client, 
@@ -36,12 +36,12 @@ namespace TcpServiceCore.Server
             {
                 var contract = request.Contract;
                 if (string.IsNullOrEmpty(contract))
-                    throw new Exception($"Wrong socket initialization, Request.Contract should not be null or empty");
-                var channelConfig = this.channelConfigs.FirstOrDefault(x => x.Key == contract);
+                    throw new Exception("Wrong socket initialization, Request.Contract should not be null or empty");
+                var channelConfig = channelConfigs.FirstOrDefault(x => x.Key == contract);
                 if (channelConfig.Value == null)
                     throw new Exception($"Wrong socket initialization, contract {contract} is missing");
 
-                this.Client.Configure(channelConfig.Value);
+                Client.Configure(channelConfig.Value);
 
                 await DoHandleRequest(request);
 
@@ -51,7 +51,7 @@ namespace TcpServiceCore.Server
 
         async Task DoHandleRequest(Request request)
         {
-            var context = this.instanceContextFactory.Create(this.Client);
+            var context = instanceContextFactory.Create(Client);
             await context.HandleRequest(request, this);
         }
     }
