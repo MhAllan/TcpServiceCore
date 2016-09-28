@@ -18,7 +18,7 @@ namespace TcpServiceCore.Protocol
         public Response(int id, bool isError, object value)
         {
             this.Id = id;
-            this.IsError = IsError;
+            this.IsError = isError;
             if (value is byte[])
                 this.Value = (byte[])value;
             else
