@@ -12,9 +12,9 @@ namespace TcpServiceCore.Server
 {
     class ServerRequestHandler<T> : RequestStreamHandler where T: new()
     {
-        IInstanceContextFactory<T> instanceContextFactory;
+        readonly IInstanceContextFactory<T> instanceContextFactory;
 
-        Dictionary<string, ChannelConfig> channelConfigs;
+        readonly Dictionary<string, ChannelConfig> channelConfigs;
         bool isAccepted;
 
         public ServerRequestHandler(TcpClient client, 

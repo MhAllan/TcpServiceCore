@@ -1,12 +1,6 @@
 ﻿using TcpServiceCore.Communication;
 using TcpServiceCore.Protocol;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using TcpServiceCore.Tools;
 
@@ -14,15 +8,14 @@ namespace TcpServiceCore.Client
 {
     class InnerProxy<T> : CommunicationObject
     {
-        string server;
-        int port;
+        readonly string server;
+        readonly int port;
         TcpClient client;
         ResponseStreamHandler responseHandler;
-        ChannelConfig ChannelConfig;
+        readonly ChannelConfig ChannelConfig;
 
         public InnerProxy(string server, int port, ChannelConfig channelConfig)
         {
-            var type = typeof(T);
             this.server = server;
             this.port = port;
             this.ChannelConfig = channelConfig;

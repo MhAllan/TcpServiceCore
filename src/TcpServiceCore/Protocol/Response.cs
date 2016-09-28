@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TcpServiceCore.Protocol
+﻿namespace TcpServiceCore.Protocol
 {
     class Response
     {
@@ -19,10 +12,8 @@ namespace TcpServiceCore.Protocol
         {
             this.Id = id;
             this.IsError = IsError;
-            if (value is byte[])
-                this.Value = (byte[])value;
-            else
-                this.Value = Global.Serializer.Serialize(value);
+          var bytes = value as byte[];
+          this.Value = bytes ?? Global.Serializer.Serialize(value);
         }
 
         public Response()

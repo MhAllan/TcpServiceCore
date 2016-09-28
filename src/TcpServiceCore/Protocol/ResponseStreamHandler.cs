@@ -11,7 +11,7 @@ namespace TcpServiceCore.Protocol
 {
     class ResponseStreamHandler : StreamHandler, IResponseHandler
     {
-        ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
+        readonly ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
 
         public ResponseStreamHandler(TcpClient client)
                 : base(client)
@@ -76,10 +76,10 @@ namespace TcpServiceCore.Protocol
         private class ResponseEvent
         {
             Response _response;
-            public bool IsSuccess { get; set; }
-            public bool IsCompleted { get; private set; }
+            private bool IsSuccess { get; set; }
+            private bool IsCompleted { get; set; }
 
-            ManualResetEvent Evt;
+            readonly ManualResetEvent Evt;
 
             public ResponseEvent()
             {
