@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TcpServiceCore.Buffering
 {
@@ -11,7 +9,7 @@ namespace TcpServiceCore.Buffering
         public readonly int MaxBufferPoolSize;
 
         int minSize = 128;
-        Dictionary<int, BufferPool> pools = new Dictionary<int, BufferPool>();
+        readonly Dictionary<int, BufferPool> pools = new Dictionary<int, BufferPool>();
         
         public BufferManager(int maxBufferSize, int maxBufferPoolSize)
         {

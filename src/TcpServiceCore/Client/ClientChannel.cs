@@ -1,20 +1,15 @@
 ﻿using TcpServiceCore.Communication;
 using TcpServiceCore.Protocol;
 using TcpServiceCore.Tools;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Client
 {
     public class ClientChannel<T> : CommunicationObject, IClientChannel
     {
-        InnerProxy<T> _InnerProxy;
-        IMsgIdProvider _IdProvider;
-        string _contract;
+        readonly InnerProxy<T> _InnerProxy;
+        readonly IMsgIdProvider _IdProvider;
+        readonly string _contract;
         public ClientChannel(string server, int port, ChannelConfig config)
         {
             this._InnerProxy = new InnerProxy<T>(server, port, config);

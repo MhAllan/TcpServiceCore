@@ -1,9 +1,8 @@
 ﻿using TcpServiceCore.Communication;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Protocol
@@ -15,7 +14,7 @@ namespace TcpServiceCore.Protocol
         protected TcpClient Client;
         protected NetworkStream Stream;
 
-        public StreamHandler(TcpClient client)
+        protected StreamHandler(TcpClient client)
         {
             this.Client = client;
         }
@@ -36,6 +35,7 @@ namespace TcpServiceCore.Protocol
                 }
                 catch (Exception ex)
                 {
+                    Debug.WriteLine(ex.Message);
                     //Global.ExceptionHandler?.LogException(ex);
                 }
                 finally

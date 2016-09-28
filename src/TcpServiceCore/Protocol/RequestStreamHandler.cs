@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -10,7 +9,7 @@ namespace TcpServiceCore.Protocol
 {
     abstract class RequestStreamHandler : StreamHandler, IRequestHandler
     {
-        public RequestStreamHandler(TcpClient client)
+        protected RequestStreamHandler(TcpClient client)
             : base(client)
         {
 
