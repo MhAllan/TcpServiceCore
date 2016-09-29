@@ -59,7 +59,19 @@ namespace TcpServiceCore.Server
                 catch
                 {
                     if (cm == null)
-                        throw new Exception($"Wrong socket initialization, contract {contract} is missing");
+                    {
+                        var error = $"Wrong socket initialization, contract {contract} is missing";
+                        try
+                        {
+                            var response = new Message(MessageType.Error, request.Id, error);
+                            await this.WriteMessage(response);
+                        }
+                        catch
+                        {
+
+                        }
+                        throw new Exception(error);
+                    }
                     throw;
                 }
             }
