@@ -23,25 +23,26 @@ namespace TcpServiceCore.Dispatching
             this.Service = this.Dispatcher.CreateInstance();
         }
 
-        public async Task HandleRequest(Request request, IRequestHandler requestHandler)
-        {           
+        public async Task<Message> HandleRequest(Message request)
+        {
+            Message response = null;
+
             var operation = this.Dispatcher.GetOperation(request.Operation);
 
             var result = await operation.Execute(this.Service, request);
 
             if (operation.IsOneWay == false)
             {
-                Response resp = null;
                 if (operation.IsVoidTask)
                 {
-                    resp = new Response(request.Id, false, (byte)1);
+                    response = new Message(MessageType.Response, request.Id, (byte)1);
                 }
                 else
                 {
-                    resp = new Response(request.Id, false, result);
+                    response = new Message(MessageType.Response, request.Id, result);
                 }
-                await requestHandler.WriteResponse(resp);
             }
+            return response;
         }
     }
 }

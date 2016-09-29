@@ -7,9 +7,9 @@ using TcpServiceCore.Communication;
 
 namespace TcpServiceCore.Protocol
 {
-    interface IRequestHandler : ICommunicationObject
-    {
-        Task<Request> GetRequest();
-        Task WriteResponse(Response response);
-    }
+    //interface IMessageWriter
+    //{
+    //    Task WriteRequest(Message request);
+    //    Task<Message> WriteRequest(Message request, int timeout);
+    //}
 }

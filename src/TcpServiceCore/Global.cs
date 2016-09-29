@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TcpServiceCore.Buffering;
 
 namespace TcpServiceCore
 {
@@ -15,12 +16,14 @@ namespace TcpServiceCore
         public static ISerializer Serializer { get; set; }
         public static ExceptionHandler ExceptionHandler { get; set; }
         public static IMsgIdProvider IdProvider { get; set; }
+        public static BufferManagerFactory BufferManagerFactory { get; set; }
 
         static Global()
         {
             Serializer = new ProtoSerializer();
             ExceptionHandler = new ExceptionHandler();
             IdProvider = new SimpleIdProvider();
+            BufferManagerFactory = new BufferManagerFactory();
         }
     }
 }

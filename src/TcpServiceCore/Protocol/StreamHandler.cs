@@ -5,92 +5,215 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using TcpServiceCore.Buffering;
+using System.Threading;
+using System.Collections.Concurrent;
 
 namespace TcpServiceCore.Protocol
 {
     abstract class StreamHandler : CommunicationObject
     {
-        public event Action<TcpClient> Disconnected;
+        ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
 
-        protected TcpClient Client;
-        protected NetworkStream Stream;
+        protected readonly TcpClient Client;
 
-        public StreamHandler(TcpClient client)
+        protected IBufferManager BufferManager { get; set; }
+
+        public StreamHandler(TcpClient client, IBufferManager bufferManager)
         {
             this.Client = client;
+            this.BufferManager = bufferManager;
         }
 
-        protected abstract Task OnRead();
+        public virtual bool CanRead
+        {
+            get { return this.Client.Client.Connected; }
+        }
+
+        protected abstract Task _Write(byte[] data, int offset, int length);
+        protected abstract Task<int> _Read(byte[] buffer, int offset, int length);
+
+        protected virtual Task _OnRequestReceived(Message request) { return Task.CompletedTask; }
 
         protected override Task OnOpen()
         {
-            this.Stream = this.Client.GetStream();
             Task.Run(async () =>
             {
-                try
+                while (this.State == CommunicationState.Openning)
                 {
-                    while (this.Stream.CanRead)
+                    //waiting the open state.
+                }
+                while (this.State == CommunicationState.Opened)
+                {
+                    var msg = await this.ReadMessage();
+                    if (msg.MessageType == MessageType.Response || msg.MessageType == MessageType.Error)
                     {
-                        await this.OnRead();
+                        ResponseEvent responseEvent;
+                        this.mapper.TryRemove(msg.Id, out responseEvent);
+                        responseEvent.SetResponse(msg);
                     }
-                }
-                catch (Exception ex)
-                {
-                    //Global.ExceptionHandler?.LogException(ex);
-                }
-                finally
-                {
-                    this.Dispose();
+                    else if (msg.MessageType == MessageType.Request)
+                    {
+                        await this._OnRequestReceived(msg);
+                    }
                 }
             });
             return Task.CompletedTask;
         }
 
-        protected async Task<byte[]> Read()
+        protected override Task OnClose()
         {
+            return Task.CompletedTask;
+        }
+
+        public async Task<Message> ReadMessage()
+        {
+            var index = 0;
+
+            var data = await this.Read();
+
+            var msgType = (MessageType)data[0];
+
+            index += 1;
+
+            var id = BitConverter.ToInt32(data, index);
+
+            index += 4;
+
+            var contractLength = data[index];
+
+            index += 1;
+
+            var contract = Encoding.ASCII.GetString(data, index, contractLength);
+
+            index += contractLength;
+
+            var methodLength = data[index];
+
+            index += 1;
+
+            var method = Encoding.ASCII.GetString(data, index, methodLength);
+
+            index += methodLength;
+
+            var load = data.Skip(index).ToArray();
+
+            var request = new Message(msgType, id, contract, method, load);
+
+            this.BufferManager.AddBuffer(data);
+
+            return request;
+        }
+
+        public async Task WriteMessage(Message request)
+        {
+            var data = new List<byte>();
+
+            data.Add((byte)request.MessageType);
+
+            data.AddRange(BitConverter.GetBytes(request.Id));
+
+            var contractBytes = Encoding.ASCII.GetBytes(request.Contract);
+            data.Add((byte)contractBytes.Length);
+            data.AddRange(contractBytes);
+
+            var operationBytes = Encoding.ASCII.GetBytes(request.Operation);
+            data.Add((byte)operationBytes.Length);
+            data.AddRange(operationBytes);
+
+            data.AddRange(request.Parameter);
+
+            await this.Write(data.ToArray());
+        }
+
+        async Task<byte[]> Read()
+        {
+            this.ThrowIfNotOpened();
+
             var size = await this.GetMessageSize();
-            var msg = await this.ReadBytes(size);
+            var buffer = this.BufferManager.GetFitBuffer(size);
+            var msg = await this.ReadBytes(buffer, size);
             return msg;
         }
 
-        protected async Task Write(byte[] data)
+        async Task Write(byte[] data)
         {
+            this.ThrowIfNotOpened();
+
             var msg = new List<byte>();
             var dataSize = BitConverter.GetBytes(data.Length);
 
             msg.AddRange(dataSize);
             msg.AddRange(data);
 
-            await this.Stream.WriteAsync(msg.ToArray(), 0, msg.Count);
+            await this._Write(msg.ToArray(), 0, msg.Count);
         }
 
         async Task<int> GetMessageSize()
         {
-            var bytes = await this.ReadBytes(4);
-            return BitConverter.ToInt32(bytes, 0);
+            var size = 4;
+            var buffer = this.BufferManager.GetFitBuffer(size);
+            await this.ReadBytes(buffer, 4);
+            var result = BitConverter.ToInt32(buffer, 0);
+            this.BufferManager.AddBuffer(buffer);
+            return result;
         }
 
-        async Task<byte[]> ReadBytes(int length)
+        async Task<byte[]> ReadBytes(byte[] result, int length)
         {
-            var result = new byte[length];
             var read = 0;
-            while (this.State == CommunicationState.Opened && this.Stream.CanRead)
+            while (this.State == CommunicationState.Opened && this.CanRead)
             {
-                read += await this.Stream.ReadAsync(result, read, length - read);
+                read += await this._Read(result, read, length - read);
                 if (read == length)
                 {
                     return result;
                 }
             }
-            await this.Close();
             throw new Exception("Stream is not readable");
         }
 
-        protected override Task OnClose()
+        public async Task<Message> WriteRequest(Message request, int timeout)
         {
-            this.Client.Dispose();
-            this.Disconnected?.Invoke(this.Client);
-            return Task.CompletedTask;
+            var responseEvent = new ResponseEvent();
+            if (!this.mapper.TryAdd(request.Id, responseEvent))
+            {
+                this.Dispose();
+                throw new Exception("Could not add request to the mapper");
+            }
+            await this.WriteMessage(request);
+            return responseEvent.GetResponse(timeout);
+        }
+
+        private class ResponseEvent
+        {
+            Message _response;
+            public bool IsSuccess { get; set; }
+            public bool IsCompleted { get; private set; }
+
+            ManualResetEvent Evt;
+
+            public ResponseEvent()
+            {
+                this.Evt = new ManualResetEvent(false);
+            }
+
+            public void SetResponse(Message response)
+            {
+                this.IsSuccess = true;
+                this._response = response;
+                this.Evt.Set();
+            }
+
+            public Message GetResponse(int timeout)
+            {
+                this.Evt.WaitOne(timeout);
+                this.IsCompleted = true;
+
+                if (this.IsSuccess == false)
+                    throw new Exception("Receivetimeout reached without getting response");
+                return _response;
+            }
         }
     }
 }

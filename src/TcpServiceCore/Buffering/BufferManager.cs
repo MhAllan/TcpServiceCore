@@ -10,30 +10,30 @@ namespace TcpServiceCore.Buffering
         public readonly int MaxBufferSize;
         public readonly int MaxBufferPoolSize;
 
-        int minSize = 128;
-        Dictionary<int, BufferPool> pools = new Dictionary<int, BufferPool>();
+        const int MIN_BUFFER_SIZE = 64;
+        List<BufferPool> pools = new List<BufferPool>();
         
         public BufferManager(int maxBufferSize, int maxBufferPoolSize)
         {
             var bsn = nameof(maxBufferSize);
             var psn = nameof(maxBufferPoolSize);
 
-            if (maxBufferSize <= minSize)
-                throw new Exception($"{bsn} must be positive greater than {minSize}");
-            if (maxBufferPoolSize <= minSize)
-                throw new Exception($"{psn} must be positive greater than {minSize}");
+            if (maxBufferSize <= MIN_BUFFER_SIZE)
+                throw new Exception($"{bsn} must be positive greater than {MIN_BUFFER_SIZE}");
+            if (maxBufferPoolSize <= MIN_BUFFER_SIZE)
+                throw new Exception($"{psn} must be positive greater than {MIN_BUFFER_SIZE}");
             if (maxBufferPoolSize < maxBufferSize)
                 throw new Exception($"{psn} can not be less than {bsn}");
 
             this.MaxBufferSize = maxBufferSize;
             this.MaxBufferPoolSize = maxBufferPoolSize;
 
-            var poolSize = minSize / 2;
+            var poolSize = MIN_BUFFER_SIZE / 2;
             do
             {
-                poolSize = Math.Min(poolSize * 2, maxBufferPoolSize);
-                pools.Add(poolSize, new BufferPool(poolSize, maxBufferPoolSize));
-            } while (poolSize < maxBufferPoolSize);
+                poolSize = Math.Min(poolSize * 2, this.MaxBufferPoolSize);
+                pools.Add(new BufferPool(poolSize, this.MaxBufferPoolSize));
+            } while (poolSize < this.MaxBufferPoolSize);
         }
 
         public byte[] GetFitBuffer(int size)
@@ -41,10 +41,10 @@ namespace TcpServiceCore.Buffering
             if (size > this.MaxBufferSize)
                 throw new Exception($"Received message is too big, max buffer size is {this.MaxBufferSize}");
 
-            if (size < minSize)
+            if (size < MIN_BUFFER_SIZE)
                 return new byte[size];
 
-            var fitPoolIndex = (int)Math.Ceiling((double)size / minSize);
+            var fitPoolIndex = (int)Math.Ceiling((double)size / MIN_BUFFER_SIZE);
 
             return this.pools[fitPoolIndex].GetBuffer();
         }
@@ -56,10 +56,10 @@ namespace TcpServiceCore.Buffering
 
             var length = buffer.Length;
 
-            if (length < minSize || length > this.MaxBufferSize)
+            if (length < MIN_BUFFER_SIZE || length > this.MaxBufferSize)
                 return;
 
-            var fitPoolIndex = (int)Math.Ceiling((double)length / minSize);
+            var fitPoolIndex = (int)Math.Ceiling((double)length / MIN_BUFFER_SIZE);
 
             this.pools[fitPoolIndex].AddBuffer(buffer);
         }

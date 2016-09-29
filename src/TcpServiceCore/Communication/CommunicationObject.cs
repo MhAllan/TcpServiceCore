@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TcpServiceCore.Communication
@@ -10,6 +11,8 @@ namespace TcpServiceCore.Communication
     public abstract class CommunicationObject : ICommunicationObject
     {
         public CommunicationState State { get; private set; }
+
+        protected SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         public CommunicationObject()
         {
@@ -22,68 +25,70 @@ namespace TcpServiceCore.Communication
 
         public async Task Open()
         {
-            lock (this)
+            await _lock.WaitAsync();
+            try
             {
                 if (this.State != CommunicationState.Created)
                     throw new Exception($"Can not open channel when its state is {State.ToString()}");
                 this.State = CommunicationState.Openning;
-            }
-            try
-            {
+
                 await this.OnOpen();
-                lock (this)
-                {
-                    if (this.State != CommunicationState.Openning)
-                        throw new Exception($"Can not open channel when its state is {State.ToString()}");
-                    this.State = CommunicationState.Opened;
-                }
+
+                if (this.State != CommunicationState.Openning)
+                    throw new Exception($"Can not open channel when its state is {State.ToString()}");
+                this.State = CommunicationState.Opened;
             }
-            catch (Exception)
+            catch
             {
-                lock (this)
-                {
-                    this.State = CommunicationState.Faulted;
-                    throw;
-                }
+                this.State = CommunicationState.Faulted;
+                throw;
+            }
+            finally
+            {
+                _lock.Release();
             }
         }
 
         public async Task Close()
         {
-            lock (this)
-            {
-                if(this.State < CommunicationState.Opened)
-                    throw new Exception($"Can not close channel when its state is {State.ToString()}");
-                this.State = CommunicationState.Closing;
-            }
+            await _lock.WaitAsync();
             try
             {
+                if (this.State < CommunicationState.Opened)
+                    throw new Exception($"Can not close channel when its state is {State.ToString()}");
+                this.State = CommunicationState.Closing;
+
                 await this.OnClose();
-                lock (this)
-                {
-                    if (this.State != CommunicationState.Closing)
-                        throw new Exception($"Can not close channel when its state is {State.ToString()}");
-                    this.State = CommunicationState.Closed;
-                }
+
+                if (this.State != CommunicationState.Closing)
+                    throw new Exception($"Can not close channel when its state is {State.ToString()}");
+                this.State = CommunicationState.Closed;
             }
-            catch (Exception)
+            catch
             {
-                lock (this)
-                {
-                    this.State = CommunicationState.Faulted;
-                    throw;
-                }
+                this.State = CommunicationState.Faulted;
+                throw;
+            }
+            finally
+            {
+                _lock.Release();
             }
         }
 
         public virtual async Task Abort()
         {
-            await this.OnClose();
+            await this.Close();
         }
 
-        public async void Dispose()
+        public virtual void Dispose()
         {
-            await this.Abort();
+            this.Close().ConfigureAwait(false);
+        }
+
+        protected void ThrowIfNotOpened()
+        {
+            if (this.State != CommunicationState.Opened)
+                throw new Exception($"{this.GetType().Name} is not in 'Open' State");
         }
     }
 }

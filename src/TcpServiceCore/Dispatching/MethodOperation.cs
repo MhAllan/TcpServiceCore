@@ -54,7 +54,7 @@ namespace TcpServiceCore.Dispatching
                 throw new Exception($"{this.Name} is One Way Operation Contract, it must return Task");
         }
 
-        public async Task<object> Execute(object instance, Request request)
+        public async Task<object> Execute(object instance, Message request)
         {
             var paramBytes = request.Parameter;
             

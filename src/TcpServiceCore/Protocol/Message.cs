@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace TcpServiceCore.Protocol
 {
-    class Request
+    class Message
     {
         public int Id { get; set; }
+
+        public MessageType MessageType { get; set; }
 
         public string Contract { get; set; }
 
@@ -16,15 +18,24 @@ namespace TcpServiceCore.Protocol
 
         public byte[] Parameter { get; set; }
 
-        public Request(int id, string contract, string operation, object parameter)
+        public Message(MessageType msgType, int id, object parameter)
         {
+            this.MessageType = msgType;
             this.Id = id;
-            this.Contract = contract;
-            this.Operation = operation;
             if (parameter is byte[])
                 this.Parameter = (byte[])parameter;
             else
                 this.Parameter = Global.Serializer.Serialize(parameter);
+
+            this.Contract = string.Empty;
+            this.Operation = string.Empty;
+        }
+
+        public Message(MessageType msgType, int id, string contract, string operation, object parameter)
+            : this(msgType, id, parameter)
+        {
+            this.Contract = contract;
+            this.Operation = operation;
         }
     }
 }

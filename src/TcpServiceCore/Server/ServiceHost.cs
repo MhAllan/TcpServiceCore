@@ -50,7 +50,7 @@ namespace TcpServiceCore.Server
                     {
                         var client = await this.listener.AcceptTcpClientAsync();
                         var handler = new ServerRequestHandler<T>(client, this.ChannelConfigs, this.InstanceContextFactory);
-                        handler.Open();
+                        await handler.Open();
                     }
                     catch (Exception ex)
                     {

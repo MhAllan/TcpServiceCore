@@ -17,12 +17,11 @@ namespace TcpServiceCore.Client
         string server;
         int port;
         TcpClient client;
-        ResponseStreamHandler responseHandler;
+        AsyncStreamHandler responseHandler;
         ChannelConfig ChannelConfig;
 
         public InnerProxy(string server, int port, ChannelConfig channelConfig)
         {
-            var type = typeof(T);
             this.server = server;
             this.port = port;
             this.ChannelConfig = channelConfig;
@@ -33,7 +32,13 @@ namespace TcpServiceCore.Client
         {
             this.client = new TcpClient(AddressFamily.InterNetwork);
             this.client.Configure(ChannelConfig);
-            this.responseHandler = new ResponseStreamHandler(this.client);
+
+            var mbs = this.ChannelConfig.MaxBufferSize;
+            var mps = this.ChannelConfig.MaxBufferPoolSize;
+
+            var bufferManager = Global.BufferManagerFactory.CreateBufferManager(mbs, mps);
+
+            this.responseHandler = new AsyncStreamHandler(this.client, bufferManager);
         }
 
         protected override async Task OnOpen()
@@ -48,20 +53,20 @@ namespace TcpServiceCore.Client
             client.Dispose();
         }
 
-        public async Task SendOneWay(Request request)
+        public async Task SendOneWay(Message request)
         {
-            await this.responseHandler.WriteRequest(request);
+            await this.responseHandler.WriteMessage(request);
         }
 
-        public async Task SendVoid(Request request)
+        public async Task SendVoid(Message request)
         {
             await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
         }
 
-        public async Task<R> SendReturn<R>(Request request)
+        public async Task<R> SendReturn<R>(Message request)
         {
-            Response response = await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
-            var result = Global.Serializer.Deserialize<R>(response.Value);
+            var response = await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
+            var result = Global.Serializer.Deserialize<R>(response.Parameter);
             return result;
         }
     }
