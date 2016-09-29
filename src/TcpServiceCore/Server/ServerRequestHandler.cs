@@ -60,6 +60,7 @@ namespace TcpServiceCore.Server
                 {
                     if (cm == null)
                         throw new Exception($"Wrong socket initialization, contract {contract} is missing");
+                    throw;
                 }
             }
         }
