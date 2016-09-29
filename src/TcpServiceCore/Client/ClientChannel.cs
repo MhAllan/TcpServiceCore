@@ -15,11 +15,15 @@ namespace TcpServiceCore.Client
         InnerProxy<T> _InnerProxy;
         IMsgIdProvider _IdProvider;
         string _contract;
+
         public ClientChannel(string server, int port, ChannelConfig config)
         {
-            this._InnerProxy = new InnerProxy<T>(server, port, config);
             this._IdProvider = Global.IdProvider;
             this._contract = typeof(T).FullName;
+
+            var cm = new ChannelManager(this._contract, config);
+
+            this._InnerProxy = new InnerProxy<T>(server, port, cm);
         }
 
         protected override Task OnOpen()

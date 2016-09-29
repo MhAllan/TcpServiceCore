@@ -18,27 +18,22 @@ namespace TcpServiceCore.Client
         int port;
         TcpClient client;
         AsyncStreamHandler responseHandler;
-        ChannelConfig ChannelConfig;
+        ChannelManager ChannelManager;
 
-        public InnerProxy(string server, int port, ChannelConfig channelConfig)
+        public InnerProxy(string server, int port, ChannelManager channelManager)
         {
             this.server = server;
             this.port = port;
-            this.ChannelConfig = channelConfig;
+            this.ChannelManager = channelManager;
             this.Init();
         }
 
         void Init()
         {
             this.client = new TcpClient(AddressFamily.InterNetwork);
-            this.client.Configure(ChannelConfig);
+            this.client.Configure(ChannelManager.ChannelConfig);
 
-            var mbs = this.ChannelConfig.MaxBufferSize;
-            var mps = this.ChannelConfig.MaxBufferPoolSize;
-
-            var bufferManager = Global.BufferManagerFactory.CreateBufferManager(mbs, mps);
-
-            this.responseHandler = new AsyncStreamHandler(this.client, bufferManager);
+            this.responseHandler = new AsyncStreamHandler(this.client, this.ChannelManager.BufferManager);
         }
 
         protected override async Task OnOpen()

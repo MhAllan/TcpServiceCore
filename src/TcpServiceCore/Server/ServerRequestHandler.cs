@@ -16,16 +16,16 @@ namespace TcpServiceCore.Server
     {
         IInstanceContextFactory<T> instanceContextFactory;
 
-        Dictionary<string, ChannelConfig> channelConfigs;
+        Dictionary<string, ChannelManager> channelManagers;
         bool isAccepted;
 
         public ServerRequestHandler(TcpClient client, 
-            Dictionary<string, ChannelConfig> channelConfigs,
+            Dictionary<string, ChannelManager> channelManagers,
             IInstanceContextFactory<T> instanceContextFactory)
             : base(client, new DummyBufferManager())
         {
             this.instanceContextFactory = instanceContextFactory;
-            this.channelConfigs = channelConfigs;
+            this.channelManagers = channelManagers;
         }
 
         protected override async Task _OnRequestReceived(Message request)
@@ -39,21 +39,28 @@ namespace TcpServiceCore.Server
                 var contract = request.Contract;
                 if (string.IsNullOrEmpty(contract))
                     throw new Exception($"Wrong socket initialization, Request.Contract should not be null or empty");
-                var channelConfig = this.channelConfigs.FirstOrDefault(x => x.Key == contract);
 
-                var config = channelConfig.Value;
-                if (config == null)
-                    throw new Exception($"Wrong socket initialization, contract {contract} is missing");
+                ChannelManager cm = null;
+                try
+                {
+                    cm = this.channelManagers[contract];
+                    var config = cm.ChannelConfig;
 
-                this.Client.Configure(config);
+                    this.Client.Configure(config);
 
-                var mbs = config.MaxBufferSize;
-                var mps = config.MaxBufferPoolSize;
-                this.BufferManager = Global.BufferManagerFactory.CreateBufferManager(mbs, mps);
+                    var mbs = config.MaxBufferSize;
+                    var mps = config.MaxBufferPoolSize;
+                    this.BufferManager = cm.BufferManager;
 
-                isAccepted = true;
+                    isAccepted = true;
 
-                await DoHandleRequest(request);
+                    await DoHandleRequest(request);
+                }
+                catch
+                {
+                    if (cm == null)
+                        throw new Exception($"Wrong socket initialization, contract {contract} is missing");
+                }
             }
         }
 

@@ -7,12 +7,25 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace TcpServiceCore.Dispatching
 {
     class InstanceContext<T> where T: new()
     {
-        public static volatile InstanceContext<T> Current;
+        static ThreadLocal<InstanceContext<T>> _Current = new ThreadLocal<InstanceContext<T>>();
+
+        public static InstanceContext<T> Current
+        {
+            get
+            {
+                return _Current.Value;
+            }
+            set
+            {
+                _Current.Value = value;
+            }
+        }
 
         public readonly T Service;
         readonly TypeDispatcher<T> Dispatcher;

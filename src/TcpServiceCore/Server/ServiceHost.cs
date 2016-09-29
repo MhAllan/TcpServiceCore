@@ -21,7 +21,7 @@ namespace TcpServiceCore.Server
 
         IInstanceContextFactory<T> InstanceContextFactory = new InstanceContextFactory<T>();
 
-        Dictionary<string, ChannelConfig> ChannelConfigs = new Dictionary<string, ChannelConfig>();
+        Dictionary<string, ChannelManager> ChannelManagers = new Dictionary<string, ChannelManager>();
 
         public ServiceHost(int port)
         {
@@ -34,8 +34,14 @@ namespace TcpServiceCore.Server
         public void AddContract<Contract>(ChannelConfig config)
         {
             var cType = typeof(Contract);
+
+            var contract = cType.FullName;
+
             ContractHelper.ValidateContract(this.type.GetTypeInfo(), cType.GetTypeInfo());
-            this.ChannelConfigs.Add(cType.FullName, config);
+
+            var cm = new ChannelManager(contract, config);
+
+            this.ChannelManagers.Add(contract, cm);
         }
 
         protected override Task OnOpen()
@@ -49,7 +55,7 @@ namespace TcpServiceCore.Server
                     try
                     {
                         var client = await this.listener.AcceptTcpClientAsync();
-                        var handler = new ServerRequestHandler<T>(client, this.ChannelConfigs, this.InstanceContextFactory);
+                        var handler = new ServerRequestHandler<T>(client, this.ChannelManagers, this.InstanceContextFactory);
                         await handler.Open();
                     }
                     catch (Exception ex)
