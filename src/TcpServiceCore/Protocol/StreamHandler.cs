@@ -68,11 +68,17 @@ namespace TcpServiceCore.Protocol
 
         public async Task<Message> ReadMessage()
         {
+            this.ThrowIfNotOpened();
+
+            var size = await this.GetMessageSize();
+
+            var buffer = this.BufferManager.GetFitBuffer(size);
+            
             var index = 0;
 
-            var data = await this.Read();
+            var data = await this.ReadBytes(buffer, size);
 
-            var msgType = (MessageType)data[0];
+            var msgType = (MessageType)data[index];
 
             index += 1;
 
@@ -96,7 +102,7 @@ namespace TcpServiceCore.Protocol
 
             index += methodLength;
 
-            var load = data.Skip(index).ToArray();
+            var load = data.Skip(index).Take(size - index).ToArray();
 
             var request = new Message(msgType, id, contract, method, load);
 
@@ -107,6 +113,8 @@ namespace TcpServiceCore.Protocol
 
         public async Task WriteMessage(Message request)
         {
+            this.ThrowIfNotOpened();
+
             var data = new List<byte>();
 
             data.Add((byte)request.MessageType);
@@ -123,26 +131,9 @@ namespace TcpServiceCore.Protocol
 
             data.AddRange(request.Parameter);
 
-            await this.Write(data.ToArray());
-        }
-
-        async Task<byte[]> Read()
-        {
-            this.ThrowIfNotOpened();
-
-            var size = await this.GetMessageSize();
-            var buffer = this.BufferManager.GetFitBuffer(size);
-            var msg = await this.ReadBytes(buffer, size);
-            return msg;
-        }
-
-        async Task Write(byte[] data)
-        {
-            this.ThrowIfNotOpened();
+            var dataSize = BitConverter.GetBytes(data.Count);
 
             var msg = new List<byte>();
-            var dataSize = BitConverter.GetBytes(data.Length);
-
             msg.AddRange(dataSize);
             msg.AddRange(data);
 

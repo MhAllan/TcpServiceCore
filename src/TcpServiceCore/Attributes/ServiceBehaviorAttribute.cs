@@ -11,5 +11,10 @@ namespace TcpServiceCore.Attributes
     public class ServiceBehaviorAttribute : Attribute
     {
         public InstanceContextMode InstanceContextMode { get; set; }
+
+        public ServiceBehaviorAttribute()
+        {
+            this.InstanceContextMode = InstanceContextMode.PerSession;
+        }
     }
 }

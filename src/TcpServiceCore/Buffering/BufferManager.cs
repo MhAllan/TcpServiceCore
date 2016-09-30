@@ -56,7 +56,7 @@ namespace TcpServiceCore.Buffering
 
             var length = buffer.Length;
 
-            if (length < MIN_BUFFER_SIZE || length > this.MaxBufferSize)
+            if (length < MIN_BUFFER_SIZE)
                 return;
 
             var fitPoolIndex = (int)Math.Ceiling((double)length / MIN_BUFFER_SIZE);
