@@ -22,32 +22,26 @@ namespace TcpServiceCore.Dispatching
         InstanceContext<T> IInstanceContextFactory<T>.Create(TcpClient client)
         {
             InstanceContext<T> result = null;
-            var dispatcher = TypeDispatcher<T>.Instance;
-            if (dispatcher.InstanceContextMode == InstanceContextMode.Single)
+            if (InstanceContext<T>.InstanceContextMode == InstanceContextMode.Single)
             {
                 if (Singleton == null)
                 {
                     lock (_lock)
                     {
                         if (Singleton == null)
-                            Singleton = new InstanceContext<T>(dispatcher);
+                            Singleton = new InstanceContext<T>();
                     }
                 }
                 result = Singleton;
             }
-            else if (dispatcher.InstanceContextMode == InstanceContextMode.PerCall)
+            else if (InstanceContext<T>.InstanceContextMode == InstanceContextMode.PerCall)
             {
-                result = new InstanceContext<T>(dispatcher);
+                result = new InstanceContext<T>();
             }
-            else if (dispatcher.InstanceContextMode == InstanceContextMode.PerSession)
+            else if (InstanceContext<T>.InstanceContextMode == InstanceContextMode.PerSession)
             {
-                result = contexts.AddOrUpdate(client, new InstanceContext<T>(dispatcher), (s, d) => d);
+                result = contexts.AddOrUpdate(client, new InstanceContext<T>(), (s, d) => d);
             }
-            if (InstanceContext<T>.Current != result)
-            {
-                this.ServiceInstantiated?.Invoke(result.Service);
-            }
-            InstanceContext<T>.Current = result;
             return result;
         }
     }

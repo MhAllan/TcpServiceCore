@@ -80,7 +80,7 @@ namespace TcpServiceCore.Server
         async Task DoHandleRequest(Message request)
         {
             var context = this.instanceContextFactory.Create(this.Client);
-            var response = await context.HandleRequest(request);
+            var response = await context.HandleRequest(this.Client, request);
             if (response != null)
                 await this.WriteMessage(response);
         }

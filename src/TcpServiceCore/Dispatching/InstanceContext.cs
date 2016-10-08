@@ -8,65 +8,74 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Reflection;
+using TcpServiceCore.Attributes;
 
 namespace TcpServiceCore.Dispatching
 {
     class InstanceContext<T> where T: new()
     {
-        static ThreadLocal<InstanceContext<T>> _Current = new ThreadLocal<InstanceContext<T>>();
-
-        public static InstanceContext<T> Current
-        {
-            get
-            {
-                return _Current.Value;
-            }
-            set
-            {
-                _Current.Value = value;
-            }
-        }
+        public static readonly InstanceContextMode InstanceContextMode;
+        static readonly List<MethodOperation> OperationDispatchers = new List<MethodOperation>();
 
         public readonly T Service;
-        readonly TypeDispatcher<T> Dispatcher;
 
-        public InstanceContext(TypeDispatcher<T> dispatcher)
+        static InstanceContext()
         {
-            this.Dispatcher = dispatcher;
-            this.Service = this.Dispatcher.CreateInstance();
+            var type = typeof(T);
+            InstanceContextMode = InstanceContextMode.PerCall;
+
+            var serviceBehavior = type.GetTypeInfo().GetCustomAttribute<ServiceBehaviorAttribute>(false);
+            if (serviceBehavior != null)
+            {
+                InstanceContextMode = serviceBehavior.InstanceContextMode;
+            }
+
+            GetOperations(type);
+
+            if (OperationDispatchers.Count == 0)
+                throw new Exception("No OperationContract found");
         }
 
-        public async Task<Message> HandleRequest(Message request)
+        static void GetOperations(Type type)
         {
-            Message response = null;
-
-            var operation = this.Dispatcher.GetOperation(request.Operation);
-
-            if (operation.IsOneWay)
+            var interfaces = type.GetInterfaces();
+            foreach (var intfc in interfaces)
             {
-                await operation.Execute(this.Service, request);
-            }
-            else
-            {
-                try
+                var intInfo = intfc.GetTypeInfo();
+                if (ContractHelper.IsContract(intInfo))
                 {
-                    var result = await operation.Execute(this.Service, request);
-                    if (operation.IsVoidTask)
+                    var operations = ContractHelper.ValidateContract(intInfo);
+                    if (operations != null)
                     {
-                        response = new Message(MessageType.Response, request.Id, (byte)1);
+                        OperationDispatchers.AddRange(operations);
                     }
-                    else
-                    {
-                        response = new Message(MessageType.Response, request.Id, result);
-                    }
-                }
-                catch
-                {
-                    response = new Message(MessageType.Error, request.Id, "Server Error");
+                    GetOperations(intfc);
                 }
             }
+        }
 
-            return response;
+
+        public InstanceContext(T instance)
+        {
+            this.Service = instance;
+        }
+
+        public InstanceContext()
+        {
+            this.Service = new T();
+        }
+
+        MethodOperation GetOperation(string name)
+        {
+            return OperationDispatchers.FirstOrDefault(x => x.TypeQualifiedName == name);
+        }
+
+        public async Task<Message> HandleRequest(TcpClient client, Message request)
+        {
+            var operation = GetOperation(request.Operation);
+            var operationContext = new OperationContext(this.Service, client, operation);
+            return await operationContext.HandleRequest(request);
         }
     }
 }
