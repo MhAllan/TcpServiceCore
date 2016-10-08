@@ -42,19 +42,30 @@ namespace TcpServiceCore.Dispatching
 
             var operation = this.Dispatcher.GetOperation(request.Operation);
 
-            var result = await operation.Execute(this.Service, request);
-
-            if (operation.IsOneWay == false)
+            if (operation.IsOneWay)
             {
-                if (operation.IsVoidTask)
+                await operation.Execute(this.Service, request);
+            }
+            else
+            {
+                try
                 {
-                    response = new Message(MessageType.Response, request.Id, (byte)1);
+                    var result = await operation.Execute(this.Service, request);
+                    if (operation.IsVoidTask)
+                    {
+                        response = new Message(MessageType.Response, request.Id, (byte)1);
+                    }
+                    else
+                    {
+                        response = new Message(MessageType.Response, request.Id, result);
+                    }
                 }
-                else
+                catch
                 {
-                    response = new Message(MessageType.Response, request.Id, result);
+                    response = new Message(MessageType.Error, request.Id, "Server Error");
                 }
             }
+
             return response;
         }
     }
