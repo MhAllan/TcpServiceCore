@@ -12,6 +12,7 @@ namespace TcpServiceCore.Test.Services
     {
         public Task<string> Echo(string msg)
         {
+            Console.WriteLine(OperationContext.Current == null);
             return Task.FromResult(msg.ToUpper());
         }
 

@@ -12,11 +12,12 @@ namespace TcpServiceCore.Dispatching
     {
         static ThreadLocal<OperationContext> _Current = new ThreadLocal<OperationContext>();
 
-        static OperationContext Current
+        public static OperationContext Current
         {
             get { return _Current.Value; }
         }
 
+        //TODO, hide the TcpClient, Expose proxy instead
         public readonly TcpClient Client;
 
         readonly object Service;
