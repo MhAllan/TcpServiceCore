@@ -19,7 +19,7 @@ namespace TcpServiceCore.Client
 
         static ChannelFactory()
         {
-            ImplementingType = typeof(ClientChannel<T>);
+            ImplementingType = typeof(InnerProxy<T>);
         }
 
         public static async Task<T> CreateProxy(string server, int port, ChannelConfig config, bool open = true)
@@ -27,7 +27,7 @@ namespace TcpServiceCore.Client
             if (ProxyType == null)
                 ProxyType = CreateProxyType();
 
-            var channel = new ClientChannel<T>(server, port, config);
+            var channel = new InnerProxy<T>(server, port, config);
             var proxy = Activator.CreateInstance(ProxyType, channel);
             if (open)
                 await ((IClientChannel)proxy).Open();

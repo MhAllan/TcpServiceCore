@@ -12,19 +12,29 @@ using TcpServiceCore.Tools;
 
 namespace TcpServiceCore.Client
 {
-    class InnerProxy<T> : CommunicationObject
+    public class InnerProxy<T> : CommunicationObject, IClientChannel
     {
+        static readonly string _contract;
+
+        static InnerProxy()
+        {
+            _contract = typeof(T).FullName;
+        }
+
         string server;
         int port;
         TcpClient client;
         AsyncStreamHandler responseHandler;
         ChannelManager ChannelManager;
 
-        public InnerProxy(string server, int port, ChannelManager channelManager)
+        IMsgIdProvider _IdProvider;
+
+        public InnerProxy(string server, int port, ChannelConfig config)
         {
+            this._IdProvider = Global.IdProvider;
             this.server = server;
             this.port = port;
-            this.ChannelManager = channelManager;
+            this.ChannelManager = new ChannelManager(_contract, config);
             this.Init();
         }
 
@@ -48,23 +58,32 @@ namespace TcpServiceCore.Client
             client.Dispose();
         }
 
-        public async Task SendOneWay(Message request)
+        public Task SendOneWay(string method, params object[] msg)
         {
-            await this.responseHandler.WriteMessage(request);
+            var request = new Message(MessageType.Request, 0, _contract, method, msg);
+            return this.responseHandler.WriteMessage(request);
         }
 
-        public async Task SendVoid(Message request)
+        public Task SendVoid(string method, params object[] msg)
         {
-            await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
+            var request = this.CreateRequest(method, msg);
+            return this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
         }
 
-        public async Task<R> SendReturn<R>(Message request)
+        public async Task<R> SendReturn<R>(string method, params object[] msg)
         {
+            var request = this.CreateRequest(method, msg);
             var response = await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
             if (response.MessageType == MessageType.Error)
                 throw new Exception(Global.Serializer.Deserialize<string>(response.Parameters[0]));
             var result = Global.Serializer.Deserialize<R>(response.Parameters[0]);
             return result;
+        }
+
+        Message CreateRequest(string method, params object[] msg)
+        {
+            var id = int.Parse(this._IdProvider.NewId());
+            return new Message(MessageType.Request, id, _contract, method, msg);
         }
     }
 }
