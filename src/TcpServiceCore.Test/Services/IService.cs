@@ -17,7 +17,7 @@ namespace TcpServiceCore.Test.Services
         Task<Msg> EchoMsg(Msg msg);
 
         [OperationContract]
-        Task<Msg> EchoMany(Msg msg1, Msg msg2);
+        Task<Msg> EchoMany(Msg msg1, Msg msg2, string str, int x);
 
         [OperationContract]
         Task<string> EchoNoParam();

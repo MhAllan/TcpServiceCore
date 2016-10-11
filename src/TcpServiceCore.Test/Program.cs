@@ -20,8 +20,8 @@ namespace TcpServiceCore.Test
         {
             var config = new ChannelConfig
             {
-                ReceiveTimeout = TimeSpan.FromSeconds(10),
-                SendTimeout = TimeSpan.FromSeconds(10)
+                ReceiveTimeout = TimeSpan.FromSeconds(20),
+                SendTimeout = TimeSpan.FromSeconds(20)
             };
 
             var host = new ServiceHost<Service>(9091);
@@ -49,7 +49,7 @@ namespace TcpServiceCore.Test
                 var msg1 = new Msg { Body = "M1" };
                 var msg2 = new Msg { Body = "M2" };
 
-                var multiParams = await client.EchoMany(msg1, msg2);
+                var multiParams = await client.EchoMany(msg1, msg2, "hello world", -123);
                 Console.WriteLine(multiParams.Body);
 
                 var noParam = await client.EchoNoParam();

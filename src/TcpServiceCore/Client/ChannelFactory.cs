@@ -133,33 +133,26 @@ namespace TcpServiceCore.Client
                         il.Emit(OpCodes.Ldstr, mb.Name);
                         il.Emit(OpCodes.Ldc_I4_S, operation.ParameterTypes.Length);
                         il.Emit(OpCodes.Newarr, typeof(object));
-                        for (byte x = 0; x < operation.ParameterTypes.Length; x++)
-                        {
-                            il.Emit(OpCodes.Dup);
-                            il.Emit(OpCodes.Ldc_I4_S, x);
-                            switch (x)
-                            {
-                                case 0: il.Emit(OpCodes.Ldarg_1); break;
-                                case 1: il.Emit(OpCodes.Ldarg_2); break;
-                                case 2: il.Emit(OpCodes.Ldarg_3); break;
-                                default: il.Emit(OpCodes.Ldarg_S); break;
-                            }
-                            il.Emit(OpCodes.Stelem_Ref);
-                        }
                     }
                     else
                     {
                         invoke = ImplementingType.GetMethod(operation.Name, operation.ParameterTypes);
-                        for (byte x = 0; x < operation.ParameterTypes.Length; x++)
+                    }
+                    for (byte x = 0; x < operation.ParameterTypes.Length; x++)
+                    {
+                        var xType = operation.ParameterTypes[x];
+                        il.Emit(OpCodes.Dup);
+                        il.Emit(OpCodes.Ldc_I4_S, x);
+                        switch (x)
                         {
-                            switch (x)
-                            {
-                                case 0: il.Emit(OpCodes.Ldarg_1, x); break;
-                                case 1: il.Emit(OpCodes.Ldarg_2, x); break;
-                                case 2: il.Emit(OpCodes.Ldarg_3, x); break;
-                                default: il.Emit(OpCodes.Ldarg_S, x); break;
-                            }
+                            case 0: il.Emit(OpCodes.Ldarg_1); break;
+                            case 1: il.Emit(OpCodes.Ldarg_2); break;
+                            case 2: il.Emit(OpCodes.Ldarg_3); break;
+                            default: il.Emit(OpCodes.Ldarg_S, x + 1); break;
                         }
+                        if (xType.GetTypeInfo().IsValueType)
+                            il.Emit(OpCodes.Box, xType);
+                        il.Emit(OpCodes.Stelem_Ref);
                     }
                     il.Emit(OpCodes.Call, invoke);
                     il.Emit(OpCodes.Ret);
