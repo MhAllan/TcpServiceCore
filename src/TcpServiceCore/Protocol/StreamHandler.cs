@@ -129,7 +129,8 @@ namespace TcpServiceCore.Protocol
             data.Add((byte)operationBytes.Length);
             data.AddRange(operationBytes);
 
-            data.AddRange(request.Parameter);
+            if(request.Parameter != null)
+                data.AddRange(request.Parameter);
 
             var dataSize = BitConverter.GetBytes(data.Count);
 

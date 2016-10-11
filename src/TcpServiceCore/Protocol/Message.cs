@@ -30,10 +30,6 @@ namespace TcpServiceCore.Protocol
                 else
                     this.Parameter = Global.Serializer.Serialize(p);
             }
-            else
-            {
-                this.Parameter = new byte[0];
-            }
             this.Contract = string.Empty;
             this.Operation = string.Empty;
         }
