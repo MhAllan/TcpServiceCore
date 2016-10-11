@@ -61,6 +61,8 @@ namespace TcpServiceCore.Client
         public async Task<R> SendReturn<R>(Message request)
         {
             var response = await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
+            if (response.MessageType == MessageType.Error)
+                throw new Exception(Global.Serializer.Deserialize<string>(response.Parameter));
             var result = Global.Serializer.Deserialize<R>(response.Parameter);
             return result;
         }

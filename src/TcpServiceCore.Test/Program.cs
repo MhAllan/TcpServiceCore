@@ -39,9 +39,24 @@ namespace TcpServiceCore.Test
 
             using ((IClientChannel)client)
             {
+                var str = await client.Echo("message");
+                Console.WriteLine(str);
+
                 var msg = new Msg { Id = 1, Body = "From Client" };
                 var result = await client.EchoMsg(msg);
                 Console.WriteLine(result.Body);
+
+                var noParam = await client.EchoNoParam();
+                Console.WriteLine(noParam);
+
+                try
+                {
+                    var err = await client.EchoServerError();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
 
             //client = await ChannelFactory<IService>.CreateProxy("localhost", 9091, config);

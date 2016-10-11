@@ -38,7 +38,7 @@ namespace TcpServiceCore.Client
 
         public Task SendOneWay(string method, params object[] msg)
         {
-            var request = new Message(MessageType.Request, 0, _contract, method, msg?[0]);
+            var request = new Message(MessageType.Request, 0, _contract, method, msg);
             return this._InnerProxy.SendOneWay(request);
         }
 
@@ -57,7 +57,7 @@ namespace TcpServiceCore.Client
         Message CreateRequest(string method, params object[] msg)
         {
             var id = int.Parse(this._IdProvider.NewId());
-            return new Message(MessageType.Request, id, _contract, method, msg?[0]);
+            return new Message(MessageType.Request, id, _contract, method, msg);
         }
     }
 }

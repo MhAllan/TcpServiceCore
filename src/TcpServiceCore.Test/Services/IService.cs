@@ -16,6 +16,12 @@ namespace TcpServiceCore.Test.Services
         [OperationContract]
         Task<Msg> EchoMsg(Msg msg);
 
+        [OperationContract]
+        Task<string> EchoNoParam();
+
+        [OperationContract]
+        Task<string> EchoServerError();
+
         [OperationContract(IsOneWay = true)]
         Task FireMsg(string msg);
     }

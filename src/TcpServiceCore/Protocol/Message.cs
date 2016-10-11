@@ -18,20 +18,27 @@ namespace TcpServiceCore.Protocol
 
         public byte[] Parameter { get; set; }
 
-        public Message(MessageType msgType, int id, object parameter)
+        public Message(MessageType msgType, int id, params object[] parameter)
         {
             this.MessageType = msgType;
             this.Id = id;
-            if (parameter is byte[])
-                this.Parameter = (byte[])parameter;
+            if (parameter?.Length > 0)
+            {
+                var p = parameter[0];
+                if (p is byte[])
+                    this.Parameter = (byte[])p;
+                else
+                    this.Parameter = Global.Serializer.Serialize(p);
+            }
             else
-                this.Parameter = Global.Serializer.Serialize(parameter);
-
+            {
+                this.Parameter = new byte[0];
+            }
             this.Contract = string.Empty;
             this.Operation = string.Empty;
         }
 
-        public Message(MessageType msgType, int id, string contract, string operation, object parameter)
+        public Message(MessageType msgType, int id, string contract, string operation, params object[] parameter)
             : this(msgType, id, parameter)
         {
             this.Contract = contract;

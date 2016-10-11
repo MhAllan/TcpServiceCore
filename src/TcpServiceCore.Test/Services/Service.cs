@@ -12,7 +12,7 @@ namespace TcpServiceCore.Test.Services
     {
         public Task<string> Echo(string msg)
         {
-            Console.WriteLine(OperationContext.Current == null);
+            //Console.WriteLine(OperationContext.Current == null);
             return Task.FromResult(msg.ToUpper());
         }
 
@@ -21,6 +21,16 @@ namespace TcpServiceCore.Test.Services
             msg.Id = 100;
             msg.Body = "From Server";
             return Task.FromResult(msg);
+        }
+
+        public Task<string> EchoNoParam()
+        {
+            return Task.FromResult("No Parameters Received");
+        }
+
+        public Task<string> EchoServerError()
+        {
+            throw new NotImplementedException();
         }
 
         public Task FireMsg(string msg)
