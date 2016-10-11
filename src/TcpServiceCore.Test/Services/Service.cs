@@ -16,6 +16,13 @@ namespace TcpServiceCore.Test.Services
             return Task.FromResult(msg.ToUpper());
         }
 
+        public Task<Msg> EchoMsg(Msg msg)
+        {
+            msg.Id = 100;
+            msg.Body = "From Server";
+            return Task.FromResult(msg);
+        }
+
         public Task FireMsg(string msg)
         {
             Console.WriteLine($"received {msg}");

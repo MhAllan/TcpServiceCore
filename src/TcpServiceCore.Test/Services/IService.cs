@@ -13,6 +13,9 @@ namespace TcpServiceCore.Test.Services
         [OperationContract]
         Task<string> Echo(string msg);
 
+        [OperationContract]
+        Task<Msg> EchoMsg(Msg msg);
+
         [OperationContract(IsOneWay = true)]
         Task FireMsg(string msg);
     }
