@@ -16,6 +16,16 @@ namespace TcpServiceCore.Test.Services
             return Task.FromResult(msg.ToUpper());
         }
 
+        public Task<Msg> EchoMany(Msg msg1, Msg msg2)
+        {
+            var msg = new Msg
+            {
+                Body = $"msg1: {msg1.Body}, msg2: {msg2.Body}"
+            };
+
+            return Task.FromResult(msg);
+        }
+
         public Task<Msg> EchoMsg(Msg msg)
         {
             msg.Id = 100;

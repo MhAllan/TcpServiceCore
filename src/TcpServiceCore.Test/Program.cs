@@ -46,6 +46,12 @@ namespace TcpServiceCore.Test
                 var result = await client.EchoMsg(msg);
                 Console.WriteLine(result.Body);
 
+                var msg1 = new Msg { Body = "M1" };
+                var msg2 = new Msg { Body = "M2" };
+
+                var multiParams = await client.EchoMany(msg1, msg2);
+                Console.WriteLine(multiParams.Body);
+
                 var noParam = await client.EchoNoParam();
                 Console.WriteLine(noParam);
 

@@ -102,7 +102,24 @@ namespace TcpServiceCore.Protocol
 
             index += methodLength;
 
-            var load = data.Skip(index).Take(size - index).ToArray();
+            var parametersCount = data[index];
+
+            index += 1;
+
+            var load = new byte[parametersCount][];
+
+            for (byte i = 0; i < parametersCount; i++)
+            {
+                var paramLength = BitConverter.ToInt32(data, index);
+
+                index += 4;
+
+                var param = data.Skip(index).Take(paramLength).ToArray();
+
+                index += paramLength;
+
+                load[i] = param;
+            }
 
             var request = new Message(msgType, id, contract, method, load);
 
@@ -129,8 +146,19 @@ namespace TcpServiceCore.Protocol
             data.Add((byte)operationBytes.Length);
             data.AddRange(operationBytes);
 
-            if(request.Parameter != null)
-                data.AddRange(request.Parameter);
+            if (request.HasParameters)
+            {
+                data.Add((byte)request.Parameters.Length);
+                foreach (var p in request.Parameters)
+                {
+                    data.AddRange(BitConverter.GetBytes(p.Length));
+                    data.AddRange(p);
+                }
+            }
+            else
+            {
+                data.Add(0);
+            }
 
             var dataSize = BitConverter.GetBytes(data.Count);
 

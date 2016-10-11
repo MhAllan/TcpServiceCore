@@ -22,7 +22,14 @@ namespace TcpServiceCore.Dispatching
 
         public readonly MethodInfo MethodInfo;
         public readonly Type ReturnType;
-        public readonly Type[] Parameters;
+        public readonly Type[] ParameterTypes;
+
+        static readonly Type ByteArrayType;
+
+        static MethodOperation()
+        {
+            ByteArrayType = typeof(byte[]);
+        }
 
         public MethodOperation(MethodInfo methodInfo)
         {
@@ -35,7 +42,7 @@ namespace TcpServiceCore.Dispatching
             this.IsVoidTask = this.MethodInfo.ReturnType == typeof(Task);
             this.IsAwaitable = IsVoidTask || 
                 (this.IsReturnTypeGeneric && this.ReturnType.GetGenericTypeDefinition() == typeof(Task<>));
-            this.Parameters = this.MethodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
+            this.ParameterTypes = this.MethodInfo.GetParameters().Select(x => x.ParameterType).ToArray();
             var attr = this.MethodInfo.GetCustomAttribute<OperationContractAttribute>();
             if (attr != null)
             {
@@ -56,22 +63,28 @@ namespace TcpServiceCore.Dispatching
 
         public async Task<object> Execute(object instance, Message request)
         {
-            var paramBytes = request.Parameter;
-            
-            //TODO fix this when supporting multiple parameters
-            var param = Parameters == null || Parameters.Length == 0 ? null :
-                new object[] {
-                    Global.Serializer.Deserialize(Parameters[0], paramBytes)
-                };
-
+            object[] parameters = null;
+            if (ParameterTypes != null)
+            {
+                var length = ParameterTypes.Length;
+                parameters = new object[length];
+                for (int i = 0; i < length; i++)
+                {
+                    var pt = ParameterTypes[i];
+                    if (pt == ByteArrayType)
+                        parameters[i] = request.Parameters[i];
+                    else
+                        parameters[i] = Global.Serializer.Deserialize(pt, request.Parameters[i]);
+                }
+            }
             object result = null;
             if (this.IsVoidTask)
             {
-                await (dynamic)this.MethodInfo.Invoke(instance, param);
+                await (dynamic)this.MethodInfo.Invoke(instance, parameters);
             }
             else
             {
-                result = await (dynamic)this.MethodInfo.Invoke(instance, param);
+                result = await (dynamic)this.MethodInfo.Invoke(instance, parameters);
             }
             return result;
         }

@@ -104,7 +104,7 @@ namespace TcpServiceCore.Client
                         $"{interfaceType.Name}.{operation.Name}",
                         MethodAttributes.Public | MethodAttributes.Virtual,
                         operation.ReturnType,
-                        operation.Parameters);
+                        operation.ParameterTypes);
 
                     var il = mb.GetILGenerator();
 
@@ -131,9 +131,9 @@ namespace TcpServiceCore.Client
                         }
 
                         il.Emit(OpCodes.Ldstr, mb.Name);
-                        il.Emit(OpCodes.Ldc_I4_S, operation.Parameters.Length);
+                        il.Emit(OpCodes.Ldc_I4_S, operation.ParameterTypes.Length);
                         il.Emit(OpCodes.Newarr, typeof(object));
-                        for (byte x = 0; x < operation.Parameters.Length; x++)
+                        for (byte x = 0; x < operation.ParameterTypes.Length; x++)
                         {
                             il.Emit(OpCodes.Dup);
                             il.Emit(OpCodes.Ldc_I4_S, x);
@@ -149,8 +149,8 @@ namespace TcpServiceCore.Client
                     }
                     else
                     {
-                        invoke = ImplementingType.GetMethod(operation.Name, operation.Parameters);
-                        for (byte x = 0; x < operation.Parameters.Length; x++)
+                        invoke = ImplementingType.GetMethod(operation.Name, operation.ParameterTypes);
+                        for (byte x = 0; x < operation.ParameterTypes.Length; x++)
                         {
                             switch (x)
                             {

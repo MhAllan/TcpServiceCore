@@ -8,33 +8,68 @@ namespace TcpServiceCore.Protocol
 {
     class Message
     {
-        public int Id { get; set; }
+        public readonly int Id;
 
-        public MessageType MessageType { get; set; }
+        public readonly MessageType MessageType;
 
-        public string Contract { get; set; }
+        public readonly string Contract;
 
-        public string Operation { get; set; }
+        public readonly string Operation;
 
-        public byte[] Parameter { get; set; }
+        public readonly byte[][] Parameters;
 
-        public Message(MessageType msgType, int id, params object[] parameter)
+        public readonly bool HasParameters;
+
+        public Message(MessageType msgType, int id, object[] parameters)
         {
             this.MessageType = msgType;
             this.Id = id;
-            if (parameter?.Length > 0)
+            if (parameters != null)
             {
-                var p = parameter[0];
-                if (p is byte[])
-                    this.Parameter = (byte[])p;
-                else
-                    this.Parameter = Global.Serializer.Serialize(p);
+                var length = parameters.Length;
+                if (length > 0)
+                {
+                    this.HasParameters = true;
+                    this.Parameters = new byte[length][];
+                    for (int i = 0; i < length; i++)
+                    {
+                        var p = parameters[i];
+                        if (p is byte[])
+                            this.Parameters[i] = (byte[])p;
+                        else
+                            this.Parameters[i] = Global.Serializer.Serialize(p);
+                    }
+                }
             }
             this.Contract = string.Empty;
             this.Operation = string.Empty;
         }
 
-        public Message(MessageType msgType, int id, string contract, string operation, params object[] parameter)
+        public Message(MessageType msgType, int id, object parameter)
+        {
+            this.MessageType = msgType;
+            this.Id = id;
+            this.HasParameters = true;
+            if (parameter is byte[])
+            {
+                this.Parameters = new byte[1][] { (byte[])parameter };
+            }
+            else
+            {
+                this.Parameters = new byte[1][] { (byte[])Global.Serializer.Serialize(parameter) };
+            }
+            this.Contract = string.Empty;
+            this.Operation = string.Empty;
+        }
+
+        public Message(MessageType msgType, int id, string contract, string operation, object[] parameters)
+            : this(msgType, id, parameters)
+        {
+            this.Contract = contract;
+            this.Operation = operation;
+        }
+
+        public Message(MessageType msgType, int id, string contract, string operation, object parameter)
             : this(msgType, id, parameter)
         {
             this.Contract = contract;
