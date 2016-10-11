@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using TcpServiceCore.Client;
@@ -20,6 +21,9 @@ namespace TcpServiceCore.Test
         {
             var config = new ChannelConfig
             {
+                MaxBufferSize = 2000,
+                MaxBufferPoolSize = 2000,
+
                 ReceiveTimeout = TimeSpan.FromSeconds(20),
                 SendTimeout = TimeSpan.FromSeconds(20)
             };
@@ -55,14 +59,14 @@ namespace TcpServiceCore.Test
                 var noParam = await client.EchoNoParam();
                 Console.WriteLine(noParam);
 
-                try
-                {
-                    var err = await client.EchoServerError();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+                //try
+                //{
+                //    var err = await client.EchoServerError();
+                //}
+                //catch (Exception ex)
+                //{
+                //    Console.WriteLine(ex.Message);
+                //}
             }
 
             //client = await ChannelFactory<IService>.CreateProxy("localhost", 9091, config);

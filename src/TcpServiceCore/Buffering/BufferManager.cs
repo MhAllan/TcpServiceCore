@@ -11,6 +11,13 @@ namespace TcpServiceCore.Buffering
         public readonly int MaxBufferPoolSize;
 
         const int MIN_BUFFER_SIZE = 64;
+        static int Base2Index;
+
+        static BufferManager()
+        {
+            Base2Index = (int)Math.Log((double)MIN_BUFFER_SIZE, 2);
+        }
+
         List<BufferPool> pools = new List<BufferPool>();
         
         public BufferManager(int maxBufferSize, int maxBufferPoolSize)
@@ -44,7 +51,7 @@ namespace TcpServiceCore.Buffering
             if (size < MIN_BUFFER_SIZE)
                 return new byte[size];
 
-            var fitPoolIndex = (int)Math.Ceiling((double)size / MIN_BUFFER_SIZE);
+            var fitPoolIndex = (int)Math.Ceiling(Math.Log(size, 2)) - Base2Index;
 
             return this.pools[fitPoolIndex].GetBuffer();
         }
@@ -59,7 +66,7 @@ namespace TcpServiceCore.Buffering
             if (length < MIN_BUFFER_SIZE)
                 return;
 
-            var fitPoolIndex = (int)Math.Ceiling((double)length / MIN_BUFFER_SIZE);
+            var fitPoolIndex = (int)Math.Ceiling(Math.Log(length, 2)) - Base2Index;
 
             this.pools[fitPoolIndex].AddBuffer(buffer);
         }
