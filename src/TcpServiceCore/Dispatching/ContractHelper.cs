@@ -16,14 +16,14 @@ namespace TcpServiceCore.Dispatching
                                     .FirstOrDefault() != null;
         }
 
-        public static IEnumerable<MethodOperation> ValidateContract(TypeInfo contractType)
+        public static IEnumerable<OperationDescription> ValidateContract(TypeInfo contractType)
         {
             if(!IsContract(contractType))
                 throw new Exception($"{contractType} must be Interface and attributed with {nameof(ServiceContractAttribute)}");
 
             var operations = contractType.GetMethods()
                                 .Where(x => x.GetCustomAttribute<OperationContractAttribute>() != null)
-                                .Select(x => new MethodOperation(x));
+                                .Select(x => new OperationDescription(x));
             
             foreach (var op in operations)
             {
@@ -33,7 +33,7 @@ namespace TcpServiceCore.Dispatching
             return operations;
         }
 
-        public static IEnumerable<MethodOperation> ValidateContract(TypeInfo serviceType, TypeInfo contractType)
+        public static IEnumerable<OperationDescription> ValidateContract(TypeInfo serviceType, TypeInfo contractType)
         {
             if (contractType.IsAssignableFrom(serviceType) == false)
                 throw new Exception($"Type {serviceType} does not implement interface {contractType}");

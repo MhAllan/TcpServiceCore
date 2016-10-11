@@ -16,7 +16,7 @@ namespace TcpServiceCore.Dispatching
     class InstanceContext<T> where T: new()
     {
         public static readonly InstanceContextMode InstanceContextMode;
-        static readonly List<MethodOperation> OperationDispatchers = new List<MethodOperation>();
+        static readonly List<OperationDescription> OperationDispatchers = new List<OperationDescription>();
 
         public readonly T Service;
 
@@ -66,7 +66,7 @@ namespace TcpServiceCore.Dispatching
             this.Service = new T();
         }
 
-        MethodOperation GetOperation(string name)
+        OperationDescription GetOperation(string name)
         {
             return OperationDispatchers.FirstOrDefault(x => x.TypeQualifiedName == name);
         }

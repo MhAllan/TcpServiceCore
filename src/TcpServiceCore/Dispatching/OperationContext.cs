@@ -12,6 +12,13 @@ namespace TcpServiceCore.Dispatching
     {
         static ThreadLocal<OperationContext> _Current = new ThreadLocal<OperationContext>();
 
+        static readonly Type ByteArrayType;
+
+        static OperationContext()
+        {
+            ByteArrayType = typeof(byte[]);
+        }
+
         public static OperationContext Current
         {
             get { return _Current.Value; }
@@ -21,14 +28,43 @@ namespace TcpServiceCore.Dispatching
         public readonly TcpClient Client;
 
         readonly object Service;
-        readonly MethodOperation Operation;
+        readonly OperationDescription Operation;
 
-        internal OperationContext(object service, TcpClient client, MethodOperation operation)
+        internal OperationContext(object service, TcpClient client, OperationDescription operation)
         {
             this.Service = service;
             this.Client = client;
             this.Operation = operation;
             _Current.Value = this;
+        }
+
+        async Task<object> Execute(Message request)
+        {
+            object[] parameters = null;
+            var paramTypes = this.Operation.ParameterTypes;
+            if (paramTypes != null)
+            {
+                var length = paramTypes.Length;
+                parameters = new object[length];
+                for (int i = 0; i < length; i++)
+                {
+                    var pt = paramTypes[i];
+                    if (pt == ByteArrayType)
+                        parameters[i] = request.Parameters[i];
+                    else
+                        parameters[i] = Global.Serializer.Deserialize(pt, request.Parameters[i]);
+                }
+            }
+            object result = null;
+            if (this.Operation.IsVoidTask)
+            {
+                await(dynamic)this.Operation.MethodInfo.Invoke(this.Service, parameters);
+            }
+            else
+            {
+                result = await(dynamic)this.Operation.MethodInfo.Invoke(this.Service, parameters);
+            }
+            return result;
         }
 
         internal async Task<Message> HandleRequest(Message request)
@@ -37,13 +73,13 @@ namespace TcpServiceCore.Dispatching
 
             if (this.Operation.IsOneWay)
             {
-                await this.Operation.Execute(this.Service, request);
+                await this.Execute(request);
             }
             else
             {
                 try
                 {
-                    var result = await this.Operation.Execute(this.Service, request);
+                    var result = await this.Execute(request);
                     if (this.Operation.IsVoidTask)
                     {
                         response = new Message(MessageType.Response, request.Id, (byte)1);

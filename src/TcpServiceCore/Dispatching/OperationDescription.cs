@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace TcpServiceCore.Dispatching
 {
-    class MethodOperation
+    class OperationDescription
     {
         public readonly string Name;
         public readonly string TypeQualifiedName;
@@ -24,14 +24,7 @@ namespace TcpServiceCore.Dispatching
         public readonly Type ReturnType;
         public readonly Type[] ParameterTypes;
 
-        static readonly Type ByteArrayType;
-
-        static MethodOperation()
-        {
-            ByteArrayType = typeof(byte[]);
-        }
-
-        public MethodOperation(MethodInfo methodInfo)
+        public OperationDescription(MethodInfo methodInfo)
         {
             this.MethodInfo = methodInfo;
             this.ReturnType = this.MethodInfo.ReturnType;
@@ -59,34 +52,6 @@ namespace TcpServiceCore.Dispatching
                 throw new Exception($"{this.Name} is Operation Contract, it must return Task or Task<T>");
             if (this.IsOneWay && !this.IsVoidTask)
                 throw new Exception($"{this.Name} is One Way Operation Contract, it must return Task");
-        }
-
-        public async Task<object> Execute(object instance, Message request)
-        {
-            object[] parameters = null;
-            if (ParameterTypes != null)
-            {
-                var length = ParameterTypes.Length;
-                parameters = new object[length];
-                for (int i = 0; i < length; i++)
-                {
-                    var pt = ParameterTypes[i];
-                    if (pt == ByteArrayType)
-                        parameters[i] = request.Parameters[i];
-                    else
-                        parameters[i] = Global.Serializer.Deserialize(pt, request.Parameters[i]);
-                }
-            }
-            object result = null;
-            if (this.IsVoidTask)
-            {
-                await (dynamic)this.MethodInfo.Invoke(instance, parameters);
-            }
-            else
-            {
-                result = await (dynamic)this.MethodInfo.Invoke(instance, parameters);
-            }
-            return result;
         }
     }
 }

@@ -86,7 +86,7 @@ namespace TcpServiceCore.Client
                     ImplementInterface(_interface, builder, channel);
                 }
 
-                IEnumerable<MethodOperation> operations = null;
+                IEnumerable<OperationDescription> operations = null;
                 var intInfo = interfaceType.GetTypeInfo();
 
                 if (ContractHelper.IsContract(intInfo))
@@ -95,7 +95,7 @@ namespace TcpServiceCore.Client
                 }
                 else
                 {
-                    operations = interfaceType.GetMethods().Select(x => new MethodOperation(x));
+                    operations = interfaceType.GetMethods().Select(x => new OperationDescription(x));
                 }
 
                 foreach (var operation in operations)
