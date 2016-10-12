@@ -15,7 +15,7 @@ namespace TcpServiceCore.Buffering
 
         static BufferManager()
         {
-            Base2Index = (int)Math.Log((double)MIN_BUFFER_SIZE, 2);
+            Base2Index = (int)Math.Log(MIN_BUFFER_SIZE, 2);
         }
 
         List<BufferPool> pools = new List<BufferPool>();

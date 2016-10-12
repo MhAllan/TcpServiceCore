@@ -56,7 +56,7 @@ namespace TcpServiceCore.Protocol
             }
             else
             {
-                this.Parameters = new byte[1][] { (byte[])Global.Serializer.Serialize(parameter) };
+                this.Parameters = new byte[1][] { Global.Serializer.Serialize(parameter) };
             }
             this.Contract = string.Empty;
             this.Operation = string.Empty;
