@@ -10,7 +10,7 @@ namespace TcpServiceCore.Buffering
         public readonly int MaxBufferSize;
         public readonly int MaxBufferPoolSize;
 
-        const int MIN_BUFFER_SIZE = 64;
+        const int MIN_BUFFER_SIZE = 64000;
         static int Base2Index;
 
         static BufferManager()

@@ -21,9 +21,6 @@ namespace TcpServiceCore.Test
         {
             var config = new ChannelConfig
             {
-                MaxBufferSize = 2000,
-                MaxBufferPoolSize = 2000,
-
                 ReceiveTimeout = TimeSpan.FromSeconds(20),
                 SendTimeout = TimeSpan.FromSeconds(20)
             };
