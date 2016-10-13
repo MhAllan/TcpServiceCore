@@ -26,6 +26,8 @@ namespace TcpServiceCore.Communication
 
             this.SendTimeout = TimeSpan.FromSeconds(10);
             this.ReceiveTimeout = TimeSpan.FromSeconds(60);
+
+            this.NoDelay = true;
         }
     }
 }

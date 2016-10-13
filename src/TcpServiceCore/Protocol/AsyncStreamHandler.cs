@@ -28,7 +28,6 @@ namespace TcpServiceCore.Protocol
         protected override Task<int> _Read(ArraySegment<byte> buffer)
         {
             return this.Socket.ReceiveAsync(buffer, SocketFlags.None);
-            //return await this.Stream.ReadAsync(buffer, offset, length);
         }
 
         protected override Task _Write(ArraySegment<byte> buffer)
