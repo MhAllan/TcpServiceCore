@@ -14,18 +14,8 @@ namespace TcpServiceCore.Protocol
 {
     class AsyncStreamHandler : StreamHandler
     {
-        protected NetworkStream Stream { get; private set; }
-
-        public override bool CanRead
-        {
-            get
-            {
-                return this.Stream.CanRead;
-            }
-        }
-
-        public AsyncStreamHandler(TcpClient client, IBufferManager bufferManager)
-            : base(client, bufferManager)
+        public AsyncStreamHandler(Socket socket, IBufferManager bufferManager)
+            : base(socket, bufferManager)
         {
             
         }
@@ -33,17 +23,17 @@ namespace TcpServiceCore.Protocol
         protected override async Task OnOpen()
         {
             await base.OnOpen();
-            this.Stream = this.Client.GetStream();
         }
 
-        protected override async Task<int> _Read(byte[] buffer, int offset, int length)
+        protected override Task<int> _Read(ArraySegment<byte> buffer)
         {
-            return await this.Stream.ReadAsync(buffer, offset, length);
+            return this.Socket.ReceiveAsync(buffer, SocketFlags.None);
+            //return await this.Stream.ReadAsync(buffer, offset, length);
         }
 
-        protected override async Task _Write(byte[] buffer, int offset, int length)
+        protected override Task _Write(ArraySegment<byte> buffer)
         {
-            await this.Stream.WriteAsync(buffer.ToArray(), offset, length);
+            return this.Socket.SendAsync(buffer, SocketFlags.None);
         }
     }
 }

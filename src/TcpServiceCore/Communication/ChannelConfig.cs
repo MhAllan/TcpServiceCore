@@ -15,6 +15,9 @@ namespace TcpServiceCore.Communication
         //Socket
         public TimeSpan ReceiveTimeout { get; set; }
         public TimeSpan SendTimeout { get; set; }
+        public bool NoDelay { get; set; }
+        public int ReceiveBufferSize { get; set; }
+        public int SendBufferSize { get; set; }
 
         public ChannelConfig()
         {

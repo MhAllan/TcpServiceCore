@@ -71,10 +71,10 @@ namespace TcpServiceCore.Dispatching
             return OperationDispatchers.FirstOrDefault(x => x.TypeQualifiedName == name);
         }
 
-        public async Task<Message> HandleRequest(TcpClient client, Message request)
+        public async Task<Message> HandleRequest(Socket socket, Message request)
         {
             var operation = GetOperation(request.Operation);
-            var operationContext = new OperationContext(this.Service, client, operation);
+            var operationContext = new OperationContext(this.Service, socket, operation);
             return await operationContext.HandleRequest(request);
         }
     }

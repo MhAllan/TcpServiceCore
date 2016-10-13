@@ -19,10 +19,10 @@ namespace TcpServiceCore.Server
         Dictionary<string, ChannelManager> channelManagers;
         bool isAccepted;
 
-        public ServerRequestHandler(TcpClient client, 
+        public ServerRequestHandler(Socket socket, 
             Dictionary<string, ChannelManager> channelManagers,
             IInstanceContextFactory<T> instanceContextFactory)
-            : base(client, new DummyBufferManager())
+            : base(socket, new DummyBufferManager())
         {
             this.instanceContextFactory = instanceContextFactory;
             this.channelManagers = channelManagers;
@@ -46,7 +46,7 @@ namespace TcpServiceCore.Server
                     cm = this.channelManagers[contract];
                     var config = cm.ChannelConfig;
 
-                    this.Client.Configure(config);
+                    this.Socket.Configure(config);
 
                     var mbs = config.MaxBufferSize;
                     var mps = config.MaxBufferPoolSize;
@@ -79,8 +79,8 @@ namespace TcpServiceCore.Server
 
         async Task DoHandleRequest(Message request)
         {
-            var context = this.instanceContextFactory.Create(this.Client);
-            var response = await context.HandleRequest(this.Client, request);
+            var context = this.instanceContextFactory.Create(this.Socket);
+            var response = await context.HandleRequest(this.Socket, request);
             if (response != null)
                 await this.WriteMessage(response);
         }

@@ -24,16 +24,15 @@ namespace TcpServiceCore.Dispatching
             get { return _Current.Value; }
         }
 
-        //TODO, hide the TcpClient, Expose proxy instead
-        public readonly TcpClient Client;
+        public readonly Socket Socket;
 
         readonly object Service;
         readonly OperationDescription Operation;
 
-        internal OperationContext(object service, TcpClient client, OperationDescription operation)
+        internal OperationContext(object service, Socket socket, OperationDescription operation)
         {
             this.Service = service;
-            this.Client = client;
+            this.Socket = socket;
             this.Operation = operation;
             _Current.Value = this;
         }

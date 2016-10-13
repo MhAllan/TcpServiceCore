@@ -17,7 +17,10 @@ namespace TcpServiceCore.Tools
         {
             socket.ReceiveTimeout = (int)channelConfig.ReceiveTimeout.TotalMilliseconds;
             socket.SendTimeout = (int)channelConfig.SendTimeout.TotalMilliseconds;
-            socket.NoDelay = true;
+            socket.NoDelay = channelConfig.NoDelay;
+            socket.ReceiveBufferSize = channelConfig.ReceiveBufferSize;
+            socket.SendBufferSize = channelConfig.SendBufferSize;
+            socket.LingerState.Enabled = false;
         }
     }
 }

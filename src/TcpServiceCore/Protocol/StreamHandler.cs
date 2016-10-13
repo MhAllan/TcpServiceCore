@@ -15,23 +15,23 @@ namespace TcpServiceCore.Protocol
     {
         ConcurrentDictionary<int, ResponseEvent> mapper = new ConcurrentDictionary<int, ResponseEvent>();
 
-        protected readonly TcpClient Client;
+        protected readonly Socket Socket;
 
         protected IBufferManager BufferManager { get; set; }
 
-        public StreamHandler(TcpClient client, IBufferManager bufferManager)
+        public StreamHandler(Socket socket, IBufferManager bufferManager)
         {
-            this.Client = client;
+            this.Socket = socket;
             this.BufferManager = bufferManager;
         }
 
-        public virtual bool CanRead
+        public virtual bool Connected
         {
-            get { return this.Client.Client.Connected; }
+            get { return this.Socket.Connected; }
         }
 
-        protected abstract Task _Write(byte[] data, int offset, int length);
-        protected abstract Task<int> _Read(byte[] buffer, int offset, int length);
+        protected abstract Task _Write(ArraySegment<byte> buffer);
+        protected abstract Task<int> _Read(ArraySegment<byte> buffer);
 
         protected virtual Task _OnRequestReceived(Message request) { return Task.CompletedTask; }
 
@@ -72,11 +72,15 @@ namespace TcpServiceCore.Protocol
 
             var size = await this.GetMessageSize();
 
-            var buffer = this.BufferManager.GetFitBuffer(size);
+            var poolBuffer = this.BufferManager.GetFitBuffer(size);
+
+            var buffer = new ArraySegment<byte>(poolBuffer, 0, size);
             
             var index = 0;
 
-            var data = await this.ReadBytes(buffer, size);
+            var segment = await this.ReadBytes(buffer);
+
+            var data = segment.Array;
 
             var msgType = (MessageType)data[index];
 
@@ -166,28 +170,32 @@ namespace TcpServiceCore.Protocol
             msg.AddRange(dataSize);
             msg.AddRange(data);
 
-            await this._Write(msg.ToArray(), 0, msg.Count);
+            var buffer = new ArraySegment<byte>(msg.ToArray());
+
+            await this._Write(buffer);
         }
 
         async Task<int> GetMessageSize()
         {
             var size = 4;
-            var buffer = this.BufferManager.GetFitBuffer(size);
-            await this.ReadBytes(buffer, 4);
-            var result = BitConverter.ToInt32(buffer, 0);
-            this.BufferManager.AddBuffer(buffer);
+            var poolBuffer = this.BufferManager.GetFitBuffer(size);
+            var buffer = new ArraySegment<byte>(poolBuffer, 0, size);
+            await this.ReadBytes(buffer);
+            var result = BitConverter.ToInt32(buffer.Array, 0);
+            this.BufferManager.AddBuffer(poolBuffer);
             return result;
         }
 
-        async Task<byte[]> ReadBytes(byte[] result, int length)
+        async Task<ArraySegment<byte>> ReadBytes(ArraySegment<byte> buffer)
         {
             var read = 0;
-            while (this.State == CommunicationState.Opened && this.CanRead)
+            var length = buffer.Count;
+            while (this.State == CommunicationState.Opened && this.Connected)
             {
-                read += await this._Read(result, read, length - read);
+                read += await this._Read(buffer);
                 if (read == length)
                 {
-                    return result;
+                    return buffer;
                 }
             }
             throw new Exception("Stream is not readable");

@@ -12,14 +12,14 @@ namespace TcpServiceCore.Dispatching
     {
         public event Action<T> ServiceInstantiated;
         //Create instace context, no static so we can have two hosts in one application
-        ConcurrentDictionary<TcpClient, InstanceContext<T>> contexts =
-            new ConcurrentDictionary<TcpClient, InstanceContext<T>>();
+        ConcurrentDictionary<Socket, InstanceContext<T>> contexts =
+            new ConcurrentDictionary<Socket, InstanceContext<T>>();
 
         object _lock = new object();
 
         InstanceContext<T> Singleton;
 
-        InstanceContext<T> IInstanceContextFactory<T>.Create(TcpClient client)
+        InstanceContext<T> IInstanceContextFactory<T>.Create(Socket socket)
         {
             InstanceContext<T> result = null;
             if (InstanceContext<T>.InstanceContextMode == InstanceContextMode.Single)
@@ -40,7 +40,7 @@ namespace TcpServiceCore.Dispatching
             }
             else if (InstanceContext<T>.InstanceContextMode == InstanceContextMode.PerSession)
             {
-                result = contexts.AddOrUpdate(client, new InstanceContext<T>(), (s, d) => d);
+                result = contexts.AddOrUpdate(socket, new InstanceContext<T>(), (s, d) => d);
             }
             return result;
         }

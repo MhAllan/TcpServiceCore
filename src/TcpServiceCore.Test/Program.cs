@@ -35,7 +35,7 @@ namespace TcpServiceCore.Test
             };
 
             await host.Open();
-
+          
             var client = await ChannelFactory<IService>.CreateProxy("localhost", 9091, config, true);
 
             using ((IClientChannel)client)

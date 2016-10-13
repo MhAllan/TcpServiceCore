@@ -23,7 +23,7 @@ namespace TcpServiceCore.Client
 
         string server;
         int port;
-        TcpClient client;
+        Socket socket;
         AsyncStreamHandler responseHandler;
         ChannelManager ChannelManager;
 
@@ -40,22 +40,22 @@ namespace TcpServiceCore.Client
 
         void Init()
         {
-            this.client = new TcpClient(AddressFamily.InterNetwork);
-            this.client.Configure(ChannelManager.ChannelConfig);
+            this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            this.socket.Configure(ChannelManager.ChannelConfig);
 
-            this.responseHandler = new AsyncStreamHandler(this.client, this.ChannelManager.BufferManager);
+            this.responseHandler = new AsyncStreamHandler(this.socket, this.ChannelManager.BufferManager);
         }
 
         protected override async Task OnOpen()
         {
-            await client.ConnectAsync(server, port);
+            await socket.ConnectAsync(server, port);
             await this.responseHandler.Open();
         }
 
         protected override async Task OnClose()
         {
             await this.responseHandler.Close();
-            client.Dispose();
+            socket.Dispose();
         }
 
         public Task SendOneWay(string method, params object[] msg)
@@ -67,13 +67,13 @@ namespace TcpServiceCore.Client
         public Task SendVoid(string method, params object[] msg)
         {
             var request = this.CreateRequest(method, msg);
-            return this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
+            return this.responseHandler.WriteRequest(request, this.socket.ReceiveTimeout);
         }
 
         public async Task<R> SendReturn<R>(string method, params object[] msg)
         {
             var request = this.CreateRequest(method, msg);
-            var response = await this.responseHandler.WriteRequest(request, this.client.Client.ReceiveTimeout);
+            var response = await this.responseHandler.WriteRequest(request, this.socket.ReceiveTimeout);
             if (response.MessageType == MessageType.Error)
                 throw new Exception(Global.Serializer.Deserialize<string>(response.Parameters[0]));
             var result = Global.Serializer.Deserialize<R>(response.Parameters[0]);
