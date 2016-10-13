@@ -9,6 +9,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using TcpServiceCore.Dispatching;
+using System.Net.Sockets;
 
 namespace TcpServiceCore.Client
 {
@@ -16,19 +17,41 @@ namespace TcpServiceCore.Client
     {
         static Type ImplementingType;
         static Type ProxyType;
+        static ContractDescription<T> Contract;
 
         static ChannelFactory()
         {
-            ImplementingType = typeof(InnerProxy<T>);
+            ImplementingType = typeof(InnerProxy);
+            Contract = ContractDescription<T>.Create();
+        }
+
+        internal static async Task<T> CreateProxy(Socket socket, ChannelConfig config, bool open = true)
+        {
+            return await CreateProxy(socket, null, -1, config, open);
         }
 
         public static async Task<T> CreateProxy(string server, int port, ChannelConfig config, bool open = true)
         {
+            return await CreateProxy(null, server, port, config, open);
+        }
+
+        static async Task<T> CreateProxy(Socket socket, string server, int port, ChannelConfig config, bool open)
+        {
             if (ProxyType == null)
                 ProxyType = CreateProxyType();
 
-            var channel = new InnerProxy<T>(server, port, config);
-            var proxy = Activator.CreateInstance(ProxyType, channel);
+            var channelManager = new ChannelManager(Contract, config);
+            InnerProxy innerProxy = null;
+            if (socket == null)
+            {
+                innerProxy = new InnerProxy(server, port, channelManager);
+            }
+            else
+            {
+                innerProxy = new InnerProxy(socket, channelManager);
+            }
+
+            var proxy = Activator.CreateInstance(ProxyType, innerProxy);
             if (open)
                 await ((IClientChannel)proxy).Open();
             return (T)proxy;
@@ -56,20 +79,20 @@ namespace TcpServiceCore.Client
                 TypeAttributes.Class | TypeAttributes.AnsiClass | TypeAttributes.BeforeFieldInit
                 | TypeAttributes.AutoClass | TypeAttributes.NotPublic | TypeAttributes.Sealed);
 
-            var channel = builder.DefineField("channel", ImplementingType, FieldAttributes.Private);
+            var innerProxy = builder.DefineField("channel", ImplementingType, FieldAttributes.Private);
 
             var ctor = builder.DefineConstructor(MethodAttributes.Public,
                 CallingConventions.HasThis,
-                new Type[] { channel.FieldType });
+                new Type[] { innerProxy.FieldType });
 
             var il = ctor.GetILGenerator();
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldarg_1);
-            il.Emit(OpCodes.Stfld, channel);
+            il.Emit(OpCodes.Stfld, innerProxy);
             il.Emit(OpCodes.Ret);
 
-            ImplementInterface(typeof(IClientChannel), builder, channel);
-            ImplementInterface(_interfaceType, builder, channel);
+            ImplementInterface(typeof(IClientChannel), builder, innerProxy);
+            ImplementInterface(_interfaceType, builder, innerProxy);
             
             return builder.CreateTypeInfo().AsType();
         }
@@ -89,9 +112,9 @@ namespace TcpServiceCore.Client
                 IEnumerable<OperationDescription> operations = null;
                 var intInfo = interfaceType.GetTypeInfo();
 
-                if (ContractHelper.IsContract(intInfo))
+                if (ContractDescription.IsContract(intInfo))
                 {
-                    operations = ContractHelper.ValidateContract(intInfo);
+                    operations = ContractDescription.ValidateContract(intInfo);
                 }
                 else
                 {

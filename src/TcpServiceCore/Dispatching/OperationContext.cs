@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using TcpServiceCore.Client;
 using TcpServiceCore.Protocol;
 
 namespace TcpServiceCore.Dispatching
@@ -27,14 +28,26 @@ namespace TcpServiceCore.Dispatching
         public readonly Socket Socket;
 
         readonly object Service;
+        readonly ChannelManager ChannelManager;
         readonly OperationDescription Operation;
 
-        internal OperationContext(object service, Socket socket, OperationDescription operation)
+        internal OperationContext(object service, ChannelManager channelManager, Socket socket, OperationDescription operation)
         {
             this.Service = service;
+            this.ChannelManager = channelManager;
             this.Socket = socket;
             this.Operation = operation;
             _Current.Value = this;
+        }
+
+        public async Task<T> CreateCallbackChannel<T>()
+        {
+            if (typeof(T) != this.ChannelManager.Contract.CallbackType)
+            {
+                throw new Exception($"{this.ChannelManager.Contract.ContractType.FullName} does not define " +
+                    $"callback of type {typeof(T).FullName}");
+            }
+            return await ChannelFactory<T>.CreateProxy(this.Socket, this.ChannelManager.Config, false);
         }
 
         async Task<object> Execute(Message request)

@@ -31,17 +31,15 @@ namespace TcpServiceCore.Server
             this.listener = new TcpListener(endpoint);
         }
 
-        public void AddContract<Contract>(ChannelConfig config)
+        public void AddContract<TContract>(ChannelConfig config)
         {
-            var cType = typeof(Contract);
+            var contract = ContractDescription<TContract>.Create();
 
-            var contract = cType.FullName;
-
-            ContractHelper.ValidateContract(this.type.GetTypeInfo(), cType.GetTypeInfo());
+            contract.ValidateImplementation(this.type.GetTypeInfo());
 
             var cm = new ChannelManager(contract, config);
 
-            this.ChannelManagers.Add(contract, cm);
+            this.ChannelManagers.Add(contract.ContractName, cm);
         }
 
         protected override Task OnOpen()

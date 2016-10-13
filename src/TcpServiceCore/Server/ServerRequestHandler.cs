@@ -12,14 +12,15 @@ using TcpServiceCore.Tools;
 
 namespace TcpServiceCore.Server
 {
-    class ServerRequestHandler<T> : AsyncStreamHandler where T: new()
+    class ServerRequestHandler<T> : AsyncStreamHandler where T : new()
     {
         IInstanceContextFactory<T> instanceContextFactory;
 
-        Dictionary<string, ChannelManager> channelManagers;
-        bool isAccepted;
+        Dictionary<string, ChannelManager> channelManagers = new Dictionary<string, ChannelManager>();
 
-        public ServerRequestHandler(Socket socket, 
+        ChannelManager channelManager;
+
+        public ServerRequestHandler(Socket socket,
             Dictionary<string, ChannelManager> channelManagers,
             IInstanceContextFactory<T> instanceContextFactory)
             : base(socket, new DummyBufferManager())
@@ -30,7 +31,7 @@ namespace TcpServiceCore.Server
 
         protected override async Task _OnRequestReceived(Message request)
         {
-            if (isAccepted)
+            if (this.channelManager != null)
             {
                 await DoHandleRequest(request);
             }
@@ -40,25 +41,19 @@ namespace TcpServiceCore.Server
                 if (string.IsNullOrEmpty(contract))
                     throw new Exception($"Wrong socket initialization, Request.Contract should not be null or empty");
 
-                ChannelManager cm = null;
                 try
                 {
-                    cm = this.channelManagers[contract];
-                    var config = cm.ChannelConfig;
+                    this.channelManager = this.channelManagers[contract];
 
-                    this.Socket.Configure(config);
+                    this.Socket.Configure(this.channelManager.Config);
 
-                    var mbs = config.MaxBufferSize;
-                    var mps = config.MaxBufferPoolSize;
-                    this.BufferManager = cm.BufferManager;
-
-                    isAccepted = true;
+                    this.BufferManager = this.channelManager.BufferManager;
 
                     await DoHandleRequest(request);
                 }
                 catch
                 {
-                    if (cm == null)
+                    if (this.channelManager == null)
                     {
                         var error = $"Wrong socket initialization, contract {contract} is missing";
                         try
@@ -80,7 +75,7 @@ namespace TcpServiceCore.Server
         async Task DoHandleRequest(Message request)
         {
             var context = this.instanceContextFactory.Create(this.Socket);
-            var response = await context.HandleRequest(this.Socket, request);
+            var response = await context.HandleRequest(this.Socket, this.channelManager, request);
             if (response != null)
                 await this.WriteMessage(response);
         }

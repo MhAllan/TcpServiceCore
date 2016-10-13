@@ -43,9 +43,9 @@ namespace TcpServiceCore.Dispatching
             foreach (var intfc in interfaces)
             {
                 var intInfo = intfc.GetTypeInfo();
-                if (ContractHelper.IsContract(intInfo))
+                if (ContractDescription.IsContract(intInfo))
                 {
-                    var operations = ContractHelper.ValidateContract(intInfo);
+                    var operations = ContractDescription.ValidateContract(intInfo);
                     if (operations != null)
                     {
                         OperationDispatchers.AddRange(operations);
@@ -54,7 +54,6 @@ namespace TcpServiceCore.Dispatching
                 }
             }
         }
-
 
         public InstanceContext(T instance)
         {
@@ -71,10 +70,10 @@ namespace TcpServiceCore.Dispatching
             return OperationDispatchers.FirstOrDefault(x => x.TypeQualifiedName == name);
         }
 
-        public async Task<Message> HandleRequest(Socket socket, Message request)
+        public async Task<Message> HandleRequest(Socket socket, ChannelManager channelManager, Message request)
         {
             var operation = GetOperation(request.Operation);
-            var operationContext = new OperationContext(this.Service, socket, operation);
+            var operationContext = new OperationContext(this.Service, channelManager, socket, operation);
             return await operationContext.HandleRequest(request);
         }
     }
