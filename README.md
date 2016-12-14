@@ -14,7 +14,6 @@
 * Operations **must** return **Task** or **Task&lt;T&gt;**
 * One way operation (Where the client doesn't block while the service operation is executing) **must return Task**
 * One way operation returns when the proxy writes to the network stream, delivery is not guaranteed in one way operations.
-* Operations' ***out parameters*** are ignored so don't define out parameters
 
           using System;
           using System.Collections.Generic;
