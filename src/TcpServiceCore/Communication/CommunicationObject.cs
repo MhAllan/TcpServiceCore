@@ -10,7 +10,20 @@ namespace TcpServiceCore.Communication
 {
     public abstract class CommunicationObject : ICommunicationObject
     {
-        public CommunicationState State { get; private set; }
+        public event Action<ICommunicationObject, CommunicationState> StateChanged;
+
+        CommunicationState _State;
+        public CommunicationState State
+        {
+            get { return _State; }
+            private set
+            {
+                var changed = _State != value;
+                _State = value;
+                if (changed)
+                    StateChanged?.Invoke(this, _State);
+            }
+        }
 
         protected SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 

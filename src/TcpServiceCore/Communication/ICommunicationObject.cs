@@ -9,6 +9,7 @@ namespace TcpServiceCore.Communication
 {
     public interface ICommunicationObject : IDisposable
     {
+        event Action<ICommunicationObject, CommunicationState> StateChanged;
         CommunicationState State { get; }
         Task Open();
         Task Close();
