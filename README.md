@@ -119,5 +119,5 @@
 * Metrics logging
 
 #### Limitation
-This framework is a core for more complex framework(s) for distributed systems, the protocol is not yet done, so there are some limitations and possible bugs. 
+This framework needs the community collaboration to get it solid. 
 
