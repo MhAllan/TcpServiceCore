@@ -39,23 +39,30 @@ namespace TcpServiceCore.Protocol
         {
             Task.Run(async () =>
             {
-                while (this.State == CommunicationState.Openning)
+                try
                 {
-                    //waiting the open state.
+                    while (this.State == CommunicationState.Openning)
+                    {
+                        //waiting the open state.
+                    }
+                    while (this.State == CommunicationState.Opened)
+                    {
+                        var msg = await this.ReadMessage();
+                        if (msg.MessageType == MessageType.Response || msg.MessageType == MessageType.Error)
+                        {
+                            ResponseEvent responseEvent;
+                            this.mapper.TryRemove(msg.Id, out responseEvent);
+                            responseEvent.SetResponse(msg);
+                        }
+                        else if (msg.MessageType == MessageType.Request)
+                        {
+                            await this._OnRequestReceived(msg);
+                        }
+                    }
                 }
-                while (this.State == CommunicationState.Opened)
+                catch (Exception ex)
                 {
-                    var msg = await this.ReadMessage();
-                    if (msg.MessageType == MessageType.Response || msg.MessageType == MessageType.Error)
-                    {
-                        ResponseEvent responseEvent;
-                        this.mapper.TryRemove(msg.Id, out responseEvent);
-                        responseEvent.SetResponse(msg);
-                    }
-                    else if (msg.MessageType == MessageType.Request)
-                    {
-                        await this._OnRequestReceived(msg);
-                    }
+                    this.Dispose();
                 }
             });
             return Task.CompletedTask;
@@ -63,6 +70,7 @@ namespace TcpServiceCore.Protocol
 
         protected override Task OnClose()
         {
+            this.Socket.Dispose();
             return Task.CompletedTask;
         }
 
@@ -192,7 +200,12 @@ namespace TcpServiceCore.Protocol
             var length = buffer.Count;
             while (this.State == CommunicationState.Opened && this.Connected)
             {
-                read += await this._Read(buffer);
+                var count = await this._Read(buffer);
+                if (count == 0)
+                {
+                    throw new Exception("Connected is closed");
+                }
+                read += count;
                 if (read == length)
                 {
                     return buffer;

@@ -29,6 +29,7 @@ namespace TcpServiceCore.Server
 
             var endpoint = new IPEndPoint(IPAddress.Any, port);
             this.listener = new TcpListener(endpoint);
+            listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         }
 
         public void AddContract<TContract>(ChannelConfig config)
@@ -48,6 +49,11 @@ namespace TcpServiceCore.Server
             this.listener.Start(3000);
             Task.Run(async () =>
             {
+                while (this.State == CommunicationState.Openning)
+                {
+                    //waiting the open state.
+                }
+
                 while (this.State == CommunicationState.Opened)
                 {
                     try
