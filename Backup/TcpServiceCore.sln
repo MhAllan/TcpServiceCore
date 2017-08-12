@@ -1,15 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9853367C-B621-4CAA-9694-1BD88FF5A2D6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8AF33A03-43AB-4558-8C2D-63C189763E8F}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TcpServiceCore", "src\TcpServiceCore\TcpServiceCore.csproj", "{6AAB9DDC-2D78-42E6-AEF1-BE56FC333BB8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "TcpServiceCore", "src\TcpServiceCore\TcpServiceCore.xproj", "{6AAB9DDC-2D78-42E6-AEF1-BE56FC333BB8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TcpServiceCore.Test", "src\TcpServiceCore.Test\TcpServiceCore.Test.csproj", "{A7AF8ABC-4C37-49EC-8173-F176A1FFB58E}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "TcpServiceCore.Test", "src\TcpServiceCore.Test\TcpServiceCore.Test.xproj", "{A7AF8ABC-4C37-49EC-8173-F176A1FFB58E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
