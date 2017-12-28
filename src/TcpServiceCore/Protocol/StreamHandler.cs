@@ -140,6 +140,7 @@ namespace TcpServiceCore.Protocol
 
             data.Add((byte)request.MessageType);
 
+
             data.AddRange(BitConverter.GetBytes(request.Id));
 
             var contractBytes = Encoding.ASCII.GetBytes(request.Contract);
