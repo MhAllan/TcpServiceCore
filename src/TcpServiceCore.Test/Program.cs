@@ -12,9 +12,9 @@ namespace TcpServiceCore.Test
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            RunExample().Wait();
+            await RunExample();
         }
 
         static async Task RunExample()
